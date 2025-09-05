@@ -262,12 +262,6 @@ export default function Contact() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <a href="/help-center">
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      Central de Ajuda
-                    </a>
-                  </Button>
                   <Button variant="outline" className="w-full justify-start">
                     <Phone className="w-4 h-4 mr-2" />
                     Ligar Agora
