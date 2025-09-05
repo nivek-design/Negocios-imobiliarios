@@ -50,6 +50,7 @@ export interface IStorage {
 
 export interface PropertyFilters {
   search?: string;
+  keyword?: string; // Search in title and description
   propertyType?: string;
   status?: string;
   city?: string;
@@ -57,6 +58,14 @@ export interface PropertyFilters {
   maxPrice?: number;
   bedrooms?: number;
   bathrooms?: number;
+  // Property features
+  hasGarage?: boolean;
+  hasPool?: boolean;
+  hasBalcony?: boolean;
+  hasGarden?: boolean;
+  hasAirConditioning?: boolean;
+  hasFireplace?: boolean;
+  hasPetsAllowed?: boolean;
   sortBy?: string;
   limit?: number;
   offset?: number;
@@ -100,6 +109,15 @@ export class DatabaseStorage implements IStorage {
       );
     }
     
+    if (filters?.keyword) {
+      conditions.push(
+        or(
+          ilike(properties.title, `%${filters.keyword}%`),
+          ilike(properties.description, `%${filters.keyword}%`)
+        )
+      );
+    }
+    
     if (filters?.propertyType) {
       conditions.push(eq(properties.propertyType, filters.propertyType as any));
     }
@@ -126,6 +144,35 @@ export class DatabaseStorage implements IStorage {
     
     if (filters?.bathrooms) {
       conditions.push(gte(properties.bathrooms, filters.bathrooms));
+    }
+    
+    // Property features filters
+    if (filters?.hasGarage !== undefined) {
+      conditions.push(eq(properties.hasGarage, filters.hasGarage));
+    }
+    
+    if (filters?.hasPool !== undefined) {
+      conditions.push(eq(properties.hasPool, filters.hasPool));
+    }
+    
+    if (filters?.hasBalcony !== undefined) {
+      conditions.push(eq(properties.hasBalcony, filters.hasBalcony));
+    }
+    
+    if (filters?.hasGarden !== undefined) {
+      conditions.push(eq(properties.hasGarden, filters.hasGarden));
+    }
+    
+    if (filters?.hasAirConditioning !== undefined) {
+      conditions.push(eq(properties.hasAirConditioning, filters.hasAirConditioning));
+    }
+    
+    if (filters?.hasFireplace !== undefined) {
+      conditions.push(eq(properties.hasFireplace, filters.hasFireplace));
+    }
+    
+    if (filters?.hasPetsAllowed !== undefined) {
+      conditions.push(eq(properties.hasPetsAllowed, filters.hasPetsAllowed));
     }
     
     if (conditions.length > 0) {

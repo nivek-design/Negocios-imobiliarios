@@ -16,11 +16,19 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
   const { t } = useI18n();
   const [filters, setFilters] = useState({
     propertyType: [],
+    keyword: "",
     minPrice: "",
     maxPrice: "",
     bedrooms: "",
     bathrooms: "",
     status: "",
+    hasGarage: false,
+    hasPool: false,
+    hasBalcony: false,
+    hasGarden: false,
+    hasAirConditioning: false,
+    hasFireplace: false,
+    hasPetsAllowed: false,
     ...initialFilters,
   });
 
@@ -29,7 +37,7 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
   }, [filters, onFilterChange]);
 
   const handlePropertyTypeChange = (type: string, checked: boolean) => {
-    setFilters(prev => ({
+    setFilters((prev: any) => ({
       ...prev,
       propertyType: checked 
         ? [...prev.propertyType, type]
@@ -37,18 +45,26 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
     }));
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFilters((prev: any) => ({ ...prev, [field]: value }));
   };
 
   const clearFilters = () => {
     setFilters({
       propertyType: [],
+      keyword: "",
       minPrice: "",
       maxPrice: "",
       bedrooms: "any",
       bathrooms: "any",
       status: "all",
+      hasGarage: false,
+      hasPool: false,
+      hasBalcony: false,
+      hasGarden: false,
+      hasAirConditioning: false,
+      hasFireplace: false,
+      hasPetsAllowed: false,
     });
   };
 
@@ -58,6 +74,18 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
         <CardTitle data-testid="text-search-filters">{t('search.filters')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Keyword Search */}
+        <div>
+          <Label className="text-sm font-medium text-foreground mb-2 block">Busca por palavras-chave</Label>
+          <Input
+            type="text"
+            placeholder="Buscar no título e descrição..."
+            value={filters.keyword}
+            onChange={(e) => handleInputChange('keyword', e.target.value)}
+            data-testid="input-keyword-search"
+          />
+        </div>
+
         <div>
           <Label className="text-sm font-medium text-foreground mb-2 block">{t('search.propertyType')}</Label>
           <div className="space-y-2">
@@ -142,6 +170,90 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <SelectItem value="3">3+</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Property Features */}
+        <div>
+          <Label className="text-sm font-medium text-foreground mb-2 block">Características</Label>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hasGarage"
+                checked={filters.hasGarage}
+                onCheckedChange={(checked) => handleInputChange('hasGarage', checked as boolean)}
+                data-testid="checkbox-garage"
+              />
+              <Label htmlFor="hasGarage" className="text-sm text-foreground">
+                Garagem
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hasPool"
+                checked={filters.hasPool}
+                onCheckedChange={(checked) => handleInputChange('hasPool', checked as boolean)}
+                data-testid="checkbox-pool"
+              />
+              <Label htmlFor="hasPool" className="text-sm text-foreground">
+                Piscina
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hasBalcony"
+                checked={filters.hasBalcony}
+                onCheckedChange={(checked) => handleInputChange('hasBalcony', checked as boolean)}
+                data-testid="checkbox-balcony"
+              />
+              <Label htmlFor="hasBalcony" className="text-sm text-foreground">
+                Varanda
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hasGarden"
+                checked={filters.hasGarden}
+                onCheckedChange={(checked) => handleInputChange('hasGarden', checked as boolean)}
+                data-testid="checkbox-garden"
+              />
+              <Label htmlFor="hasGarden" className="text-sm text-foreground">
+                Jardim
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hasAirConditioning"
+                checked={filters.hasAirConditioning}
+                onCheckedChange={(checked) => handleInputChange('hasAirConditioning', checked as boolean)}
+                data-testid="checkbox-air-conditioning"
+              />
+              <Label htmlFor="hasAirConditioning" className="text-sm text-foreground">
+                Ar-condicionado
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hasFireplace"
+                checked={filters.hasFireplace}
+                onCheckedChange={(checked) => handleInputChange('hasFireplace', checked as boolean)}
+                data-testid="checkbox-fireplace"
+              />
+              <Label htmlFor="hasFireplace" className="text-sm text-foreground">
+                Lareira
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hasPetsAllowed"
+                checked={filters.hasPetsAllowed}
+                onCheckedChange={(checked) => handleInputChange('hasPetsAllowed', checked as boolean)}
+                data-testid="checkbox-pets-allowed"
+              />
+              <Label htmlFor="hasPetsAllowed" className="text-sm text-foreground">
+                Aceita animais
+              </Label>
+            </div>
+          </div>
         </div>
 
         <div className="flex space-x-2">

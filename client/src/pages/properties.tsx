@@ -3,6 +3,7 @@ import Navigation from "@/components/navigation";
 import PropertyCard from "@/components/property-card";
 import PropertySearch from "@/components/property-search";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -80,6 +81,34 @@ export default function Properties() {
     <div className="min-h-screen bg-background">
       <Navigation />
       
+      {/* Location Search Bar */}
+      <section className="py-6 bg-primary text-primary-foreground">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-6">
+            <h2 className="text-3xl font-bold mb-4">Encontre o Imóvel Perfeito</h2>
+            <p className="text-lg opacity-90 mb-6">Use nossa busca avançada para encontrar a propriedade dos seus sonhos</p>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="Digite uma cidade, bairro ou endereço..."
+              value={filters.search || ""}
+              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              className="flex-1 h-12 text-lg bg-white text-black"
+              data-testid="input-location-search"
+            />
+            <Button 
+              size="lg" 
+              variant="secondary"
+              className="h-12 px-8"
+              data-testid="button-search-location"
+            >
+              Buscar
+            </Button>
+          </div>
+        </div>
+      </section>
+
       <section className="py-8 bg-muted">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-8">
