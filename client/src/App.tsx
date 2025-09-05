@@ -11,6 +11,9 @@ import Home from "@/pages/home";
 import Properties from "@/pages/properties";
 import PropertyDetail from "@/pages/property-detail";
 import AgentDashboard from "@/pages/agent-dashboard";
+import AdminLogin from "@/pages/admin-login";
+import Unauthorized from "@/pages/unauthorized";
+import ProtectedRoute from "@/components/protected-route";
 import HelpCenter from "@/pages/help-center";
 import Contact from "@/pages/contact";
 import Privacy from "@/pages/privacy";
@@ -21,27 +24,42 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public routes - always accessible */}
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/unauthorized" component={Unauthorized} />
+      <Route path="/help-center" component={HelpCenter} />
+      <Route path="/contact" component={Contact} />
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/terms" component={Terms} />
+      
+      {/* Dynamic routes based on authentication */}
       {isLoading || !isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
           <Route path="/properties" component={Properties} />
           <Route path="/property/:id" component={PropertyDetail} />
-          <Route path="/help-center" component={HelpCenter} />
-          <Route path="/contact" component={Contact} />
-          <Route path="/privacy" component={Privacy} />
-          <Route path="/terms" component={Terms} />
         </>
       ) : (
         <>
           <Route path="/" component={Home} />
           <Route path="/properties" component={Properties} />
           <Route path="/property/:id" component={PropertyDetail} />
-          <Route path="/dashboard" component={AgentDashboard} />
-          <Route path="/agent-dashboard" component={AgentDashboard} />
-          <Route path="/help-center" component={HelpCenter} />
-          <Route path="/contact" component={Contact} />
-          <Route path="/privacy" component={Privacy} />
-          <Route path="/terms" component={Terms} />
+          
+          {/* Protected routes */}
+          <Route path="/dashboard">
+            {() => (
+              <ProtectedRoute>
+                <AgentDashboard />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/agent-dashboard">
+            {() => (
+              <ProtectedRoute>
+                <AgentDashboard />
+              </ProtectedRoute>
+            )}
+          </Route>
         </>
       )}
       <Route component={NotFound} />

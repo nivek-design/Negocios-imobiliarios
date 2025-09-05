@@ -8,20 +8,72 @@ import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { geocodingService } from "./geocoding";
 import { sendEmail, generateAppointmentConfirmationEmail, generateAppointmentReminderEmail } from "./emailService";
 import { notificationService } from "./notificationService";
+import jwt from "jsonwebtoken";
+import { promisify } from "util";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
-  // Custom authentication middleware that works with both custom and Replit auth
+  // JWT Secret (in production this should be in environment variables)
+  const JWT_SECRET = process.env.JWT_SECRET || "premier-properties-secret-key-2024";
+  
+  // Helper function to generate JWT token
+  const generateToken = (user: any, rememberMe: boolean = false) => {
+    const expiresIn = rememberMe ? '30d' : '24h';
+    return jwt.sign(
+      { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName 
+      },
+      JWT_SECRET,
+      { expiresIn }
+    );
+  };
+
+  // Enhanced authentication middleware
   const customIsAuthenticated = (req: any, res: any, next: any) => {
-    // Check custom session first
+    // Check JWT token first
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.authToken;
+    
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        req.user = { 
+          ...decoded,
+          claims: { sub: decoded.id } // For compatibility with existing code
+        };
+        return next();
+      } catch (error) {
+        // Token invalid, continue to other auth methods
+      }
+    }
+    
+    // Check custom session
     if (req.session?.user) {
+      req.user = {
+        ...req.session.user,
+        claims: { sub: req.session.user.id }
+      };
       return next();
     }
     
     // Fallback to Replit auth
     return isAuthenticated(req, res, next);
+  };
+
+  // Route protection middleware
+  const requireAdmin = (req: any, res: any, next: any) => {
+    customIsAuthenticated(req, res, () => {
+      const userRole = req.user?.role || req.session?.user?.role;
+      if (userRole !== 'admin') {
+        return res.status(403).json({ message: "Acesso negado. Apenas administradores." });
+      }
+      next();
+    });
   };
 
   // Object storage service routes
@@ -96,43 +148,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, rememberMe = false } = req.body;
       
       if (!email || !password) {
         return res.status(400).json({ message: "Email e senha são obrigatórios" });
       }
       
+      // Validação básica de formato
+      if (!email.includes('@')) {
+        return res.status(400).json({ message: "Por favor, insira um email válido" });
+      }
+      
+      if (password.length < 6) {
+        return res.status(400).json({ message: "A senha deve ter pelo menos 6 caracteres" });
+      }
+      
       // Credenciais de teste para corretor
       const validCredentials = [
-        { email: "corretor@premier.com", password: "123456", name: "João Silva" },
-        { email: "admin@premier.com", password: "admin123", name: "Admin Premier" },
+        { email: "corretor@premier.com", password: "123456", name: "João Silva", role: "agent" },
+        { email: "admin@premier.com", password: "admin123", name: "Admin Premier", role: "admin" },
       ];
       
-      const user = validCredentials.find(cred => 
+      const credential = validCredentials.find(cred => 
         cred.email === email && cred.password === password
       );
       
-      if (!user) {
+      if (!credential) {
+        // Add delay to prevent brute force attacks
+        await new Promise(resolve => setTimeout(resolve, 1000));
         return res.status(401).json({ message: "Credenciais inválidas" });
       }
       
-      // Simular uma sessão de usuário
+      // Create user session object
       const userSession = {
-        id: email === "admin@premier.com" ? "admin" : "corretor",
-        email: user.email,
-        firstName: user.name.split(' ')[0],
-        lastName: user.name.split(' ')[1] || '',
-        role: email === "admin@premier.com" ? "admin" : "agent",
+        id: credential.email === "admin@premier.com" ? "admin" : "corretor",
+        email: credential.email,
+        firstName: credential.name.split(' ')[0],
+        lastName: credential.name.split(' ')[1] || '',
+        role: credential.role,
       };
       
-      // Salvar na sessão
+      // Generate JWT token
+      const token = generateToken(userSession, rememberMe);
+      
+      // Save in session for fallback
       (req.session as any).user = userSession;
+      
+      // Set secure cookie
+      const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict' as const,
+        maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000, // 30 days or 24 hours
+      };
+      
+      res.cookie('authToken', token, cookieOptions);
       
       res.json({
         message: "Login realizado com sucesso",
         user: userSession,
-        redirectToReplit: true,
-        replitAuthUrl: "/api/login"
+        token,
+        expiresIn: rememberMe ? '30d' : '24h'
       });
     } catch (error) {
       console.error("Error during login:", error);
@@ -165,7 +241,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/logout', async (req: any, res) => {
     try {
-      // Limpar sessão customizada
+      // Clear JWT cookie
+      res.clearCookie('authToken');
+      
+      // Clear session if exists
       if (req.session?.user) {
         req.session.destroy((err: any) => {
           if (err) {
@@ -176,7 +255,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.json({ message: "Logout realizado com sucesso" });
         });
       } else {
-        // Fallback para logout do Replit se necessário
         res.json({ message: "Logout realizado com sucesso" });
       }
     } catch (error) {

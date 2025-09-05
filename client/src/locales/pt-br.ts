@@ -6,6 +6,7 @@ export default {
   'nav.saved': 'Salvos',
   'nav.agentLogin': 'Login do Corretor',
   'nav.logout': 'Sair',
+  'nav.loggingOut': 'Saindo...',
   'nav.welcome': 'Bem-vindo',
 
   // Hero Section

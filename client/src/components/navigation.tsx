@@ -1,18 +1,15 @@
-import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/contexts/I18nContext";
 import { Button } from "@/components/ui/button";
-import { Home, Heart, Menu } from "lucide-react";
+import { Home, Heart, Menu, Loader2, Shield } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import LanguageSelector from "@/components/language-selector";
-import LoginModal from "@/components/login-modal";
 
 export default function Navigation() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout, isLoggingOut } = useAuth();
   const { t } = useI18n();
-  const [location] = useLocation();
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [location, setLocation] = useLocation();
 
   const navItems = [
     { href: "/properties", label: t('nav.properties'), show: true },
@@ -62,26 +59,32 @@ export default function Navigation() {
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-muted-foreground">
                   {t('nav.welcome')}, {(user as any)?.firstName || t('nav.welcome')}
+                  {(user as any)?.role === 'admin' && (
+                    <Shield className="w-3 h-3 ml-1 inline text-primary" />
+                  )}
                 </span>
                 <Button 
-                  onClick={async () => {
-                    try {
-                      await fetch('/api/auth/logout', { method: 'POST' });
-                      window.location.reload();
-                    } catch (error) {
-                      console.error('Logout error:', error);
-                    }
-                  }}
+                  onClick={() => logout()}
+                  disabled={isLoggingOut}
                   data-testid="button-logout"
                 >
-                  {t('nav.logout')}
+                  {isLoggingOut ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {t('nav.loggingOut')}
+                    </>
+                  ) : (
+                    t('nav.logout')
+                  )}
                 </Button>
               </div>
             ) : (
               <Button 
-                onClick={() => setIsLoginModalOpen(true)}
+                onClick={() => setLocation('/admin/login')}
                 data-testid="button-agent-login"
+                className="bg-primary hover:bg-primary/90"
               >
+                <Shield className="w-4 h-4 mr-2" />
                 {t('nav.agentLogin')}
               </Button>
             )}
@@ -111,10 +114,6 @@ export default function Navigation() {
           </div>
         </div>
       </div>
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={() => setIsLoginModalOpen(false)} 
-      />
     </nav>
   );
 }
