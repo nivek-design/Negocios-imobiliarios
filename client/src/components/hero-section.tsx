@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, Search } from "lucide-react";
 import { useLocation } from "wouter";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function HeroSection() {
+  const { t } = useI18n();
   const [, setLocation] = useLocation();
   const [searchData, setSearchData] = useState({
     location: "",
@@ -35,10 +37,10 @@ export default function HeroSection() {
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center text-white max-w-4xl mx-auto px-4">
           <h1 className="text-4xl md:text-6xl font-bold mb-4" data-testid="text-hero-title">
-            Find Your Dream Home
+            {t('hero.title')}
           </h1>
           <p className="text-xl md:text-2xl mb-8 text-gray-200" data-testid="text-hero-subtitle">
-            Discover exceptional properties in prime locations
+            {t('hero.subtitle')}
           </p>
           
           {/* Search Bar */}
@@ -48,7 +50,7 @@ export default function HeroSection() {
                 <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   type="text"
-                  placeholder="Enter city or neighborhood"
+                  placeholder={t('hero.locationPlaceholder')}
                   className="pl-10"
                   value={searchData.location}
                   onChange={(e) => setSearchData({ ...searchData, location: e.target.value })}
@@ -60,13 +62,13 @@ export default function HeroSection() {
                 onValueChange={(value) => setSearchData({ ...searchData, propertyType: value })}
               >
                 <SelectTrigger data-testid="select-property-type">
-                  <SelectValue placeholder="Property Type" />
+                  <SelectValue placeholder={t('hero.propertyType')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="house">House</SelectItem>
-                  <SelectItem value="condo">Condo</SelectItem>
-                  <SelectItem value="townhouse">Townhouse</SelectItem>
-                  <SelectItem value="apartment">Apartment</SelectItem>
+                  <SelectItem value="house">{t('propertyType.house')}</SelectItem>
+                  <SelectItem value="condo">{t('propertyType.condo')}</SelectItem>
+                  <SelectItem value="townhouse">{t('propertyType.townhouse')}</SelectItem>
+                  <SelectItem value="apartment">{t('propertyType.apartment')}</SelectItem>
                 </SelectContent>
               </Select>
               <Select 
@@ -74,13 +76,13 @@ export default function HeroSection() {
                 onValueChange={(value) => setSearchData({ ...searchData, priceRange: value })}
               >
                 <SelectTrigger data-testid="select-price-range">
-                  <SelectValue placeholder="Price Range" />
+                  <SelectValue placeholder={t('hero.priceRange')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0-500000">$0 - $500K</SelectItem>
-                  <SelectItem value="500000-1000000">$500K - $1M</SelectItem>
-                  <SelectItem value="1000000-2000000">$1M - $2M</SelectItem>
-                  <SelectItem value="2000000-">$2M+</SelectItem>
+                  <SelectItem value="0-500000">{t('price.0-500000')}</SelectItem>
+                  <SelectItem value="500000-1000000">{t('price.500000-1000000')}</SelectItem>
+                  <SelectItem value="1000000-2000000">{t('price.1000000-2000000')}</SelectItem>
+                  <SelectItem value="2000000-">{t('price.2000000+')}</SelectItem>
                 </SelectContent>
               </Select>
               <Button 
@@ -89,7 +91,7 @@ export default function HeroSection() {
                 data-testid="button-search"
               >
                 <Search className="w-4 h-4 mr-2" />
-                Search
+                {t('hero.search')}
               </Button>
             </div>
           </div>

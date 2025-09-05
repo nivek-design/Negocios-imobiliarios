@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useI18n } from "@/contexts/I18nContext";
 import type { Property } from "@shared/schema";
 
 export default function Landing() {
+  const { t } = useI18n();
   const { data: featuredProperties, isLoading } = useQuery<Property[]>({
     queryKey: ["/api/properties/featured"],
   });
@@ -22,10 +24,10 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4" data-testid="text-featured-title">
-              Featured Properties
+              {t('featured.title')}
             </h2>
             <p className="text-xl text-muted-foreground" data-testid="text-featured-subtitle">
-              Discover our hand-picked selection of premium homes
+              {t('featured.subtitle')}
             </p>
           </div>
 
@@ -53,7 +55,7 @@ export default function Landing() {
             ) : (
               <div className="col-span-full text-center py-12">
                 <p className="text-muted-foreground text-lg" data-testid="text-no-featured">
-                  No featured properties available at the moment.
+                  {t('featured.noProperties')}
                 </p>
               </div>
             )}
@@ -62,7 +64,7 @@ export default function Landing() {
           <div className="text-center mt-12">
             <Button asChild size="lg" data-testid="button-view-all">
               <Link href="/properties">
-                View All Properties
+                {t('featured.viewAll')}
               </Link>
             </Button>
           </div>

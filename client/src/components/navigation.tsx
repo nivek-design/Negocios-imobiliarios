@@ -1,16 +1,19 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { useI18n } from "@/contexts/I18nContext";
 import { Button } from "@/components/ui/button";
 import { Home, Heart, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import LanguageSelector from "@/components/language-selector";
 
 export default function Navigation() {
   const { isAuthenticated, user } = useAuth();
+  const { t } = useI18n();
   const [location] = useLocation();
 
   const navItems = [
-    { href: "/properties", label: "Properties", show: true },
-    { href: "/dashboard", label: "Dashboard", show: isAuthenticated },
+    { href: "/properties", label: t('nav.properties'), show: true },
+    { href: "/dashboard", label: t('nav.dashboard'), show: isAuthenticated },
   ];
 
   return (
@@ -42,6 +45,7 @@ export default function Navigation() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            <LanguageSelector />
             <Button 
               variant="ghost" 
               size="sm"
@@ -49,20 +53,20 @@ export default function Navigation() {
               data-testid="button-saved"
             >
               <Heart className="w-4 h-4 mr-1" />
-              Saved
+              {t('nav.saved')}
             </Button>
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-muted-foreground">
-                  Welcome, {user?.firstName || 'Agent'}
+                  {t('nav.welcome')}, {user?.firstName || t('nav.welcome')}
                 </span>
                 <Button asChild data-testid="button-logout">
-                  <a href="/api/logout">Logout</a>
+                  <a href="/api/logout">{t('nav.logout')}</a>
                 </Button>
               </div>
             ) : (
               <Button asChild data-testid="button-agent-login">
-                <a href="/api/login">Agent Login</a>
+                <a href="/api/login">{t('nav.agentLogin')}</a>
               </Button>
             )}
             <Sheet>

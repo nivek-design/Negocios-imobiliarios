@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface PropertySearchProps {
   onFilterChange: (filters: any) => void;
@@ -12,6 +13,7 @@ interface PropertySearchProps {
 }
 
 export default function PropertySearch({ onFilterChange, initialFilters = {} }: PropertySearchProps) {
+  const { t } = useI18n();
   const [filters, setFilters] = useState({
     propertyType: [],
     minPrice: "",
@@ -44,20 +46,20 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
       propertyType: [],
       minPrice: "",
       maxPrice: "",
-      bedrooms: "",
-      bathrooms: "",
-      status: "",
+      bedrooms: "any",
+      bathrooms: "any",
+      status: "all",
     });
   };
 
   return (
     <Card className="sticky top-24">
       <CardHeader>
-        <CardTitle data-testid="text-search-filters">Search Filters</CardTitle>
+        <CardTitle data-testid="text-search-filters">{t('search.filters')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">Property Type</Label>
+          <Label className="text-sm font-medium text-foreground mb-2 block">{t('search.propertyType')}</Label>
           <div className="space-y-2">
             {['house', 'condo', 'townhouse', 'apartment'].map((type) => (
               <div key={type} className="flex items-center space-x-2">
@@ -78,32 +80,32 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">Status</Label>
+          <Label className="text-sm font-medium text-foreground mb-2 block">{t('search.status')}</Label>
           <Select value={filters.status} onValueChange={(value) => handleInputChange('status', value)}>
             <SelectTrigger data-testid="select-status">
-              <SelectValue placeholder="Any Status" />
+              <SelectValue placeholder={t('search.anyStatus')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Status</SelectItem>
-              <SelectItem value="for_sale">For Sale</SelectItem>
-              <SelectItem value="for_rent">For Rent</SelectItem>
+              <SelectItem value="all">{t('search.anyStatus')}</SelectItem>
+              <SelectItem value="for_sale">{t('status.forSale')}</SelectItem>
+              <SelectItem value="for_rent">{t('status.forRent')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">Price Range</Label>
+          <Label className="text-sm font-medium text-foreground mb-2 block">{t('search.priceRange')}</Label>
           <div className="flex space-x-2">
             <Input
               type="number"
-              placeholder="Min"
+              placeholder={t('search.min')}
               value={filters.minPrice}
               onChange={(e) => handleInputChange('minPrice', e.target.value)}
               data-testid="input-min-price"
             />
             <Input
               type="number"
-              placeholder="Max"
+              placeholder={t('search.max')}
               value={filters.maxPrice}
               onChange={(e) => handleInputChange('maxPrice', e.target.value)}
               data-testid="input-max-price"
@@ -112,13 +114,13 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">Bedrooms</Label>
+          <Label className="text-sm font-medium text-foreground mb-2 block">{t('search.bedrooms')}</Label>
           <Select value={filters.bedrooms} onValueChange={(value) => handleInputChange('bedrooms', value)}>
             <SelectTrigger data-testid="select-bedrooms">
-              <SelectValue placeholder="Any" />
+              <SelectValue placeholder={t('search.any')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any</SelectItem>
+              <SelectItem value="any">{t('search.any')}</SelectItem>
               <SelectItem value="1">1+</SelectItem>
               <SelectItem value="2">2+</SelectItem>
               <SelectItem value="3">3+</SelectItem>
@@ -128,13 +130,13 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">Bathrooms</Label>
+          <Label className="text-sm font-medium text-foreground mb-2 block">{t('search.bathrooms')}</Label>
           <Select value={filters.bathrooms} onValueChange={(value) => handleInputChange('bathrooms', value)}>
             <SelectTrigger data-testid="select-bathrooms">
               <SelectValue placeholder="Any" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any</SelectItem>
+              <SelectItem value="any">{t('search.any')}</SelectItem>
               <SelectItem value="1">1+</SelectItem>
               <SelectItem value="2">2+</SelectItem>
               <SelectItem value="3">3+</SelectItem>
@@ -149,7 +151,7 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
             className="flex-1"
             data-testid="button-clear-filters"
           >
-            Clear
+            {t('search.clear')}
           </Button>
         </div>
       </CardContent>

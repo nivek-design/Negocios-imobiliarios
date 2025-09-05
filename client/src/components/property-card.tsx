@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Bed, Bath, Square, MapPin } from "lucide-react";
 import { Link } from "wouter";
+import { useI18n } from "@/contexts/I18nContext";
 import type { Property } from "@shared/schema";
 
 interface PropertyCardProps {
@@ -10,6 +11,7 @@ interface PropertyCardProps {
 }
 
 export default function PropertyCard({ property, className = "" }: PropertyCardProps) {
+  const { t } = useI18n();
   const formatPrice = (price: string) => {
     const num = parseFloat(price);
     if (property.status === 'for_rent') {
@@ -21,13 +23,13 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'for_sale':
-        return <Badge className="bg-secondary text-secondary-foreground">For Sale</Badge>;
+        return <Badge className="bg-secondary text-secondary-foreground">{t('status.forSale')}</Badge>;
       case 'for_rent':
-        return <Badge className="bg-accent text-accent-foreground">For Rent</Badge>;
+        return <Badge className="bg-accent text-accent-foreground">{t('status.forRent')}</Badge>;
       case 'sold':
-        return <Badge className="bg-muted text-muted-foreground">Sold</Badge>;
+        return <Badge className="bg-muted text-muted-foreground">{t('status.sold')}</Badge>;
       case 'rented':
-        return <Badge className="bg-muted text-muted-foreground">Rented</Badge>;
+        return <Badge className="bg-muted text-muted-foreground">{t('status.rented')}</Badge>;
       default:
         return null;
     }
@@ -73,18 +75,18 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
         </p>
         <div className="flex justify-between text-sm text-muted-foreground mb-4">
           <span className="flex items-center" data-testid={`text-bedrooms-${property.id}`}>
-            <Bed className="w-4 h-4 mr-1" /> {property.bedrooms} beds
+            <Bed className="w-4 h-4 mr-1" /> {property.bedrooms} {t('property.beds')}
           </span>
           <span className="flex items-center" data-testid={`text-bathrooms-${property.id}`}>
-            <Bath className="w-4 h-4 mr-1" /> {property.bathrooms} baths
+            <Bath className="w-4 h-4 mr-1" /> {property.bathrooms} {t('property.baths')}
           </span>
           <span className="flex items-center" data-testid={`text-sqft-${property.id}`}>
-            <Square className="w-4 h-4 mr-1" /> {property.squareFeet} sqft
+            <Square className="w-4 h-4 mr-1" /> {property.squareFeet} {t('property.sqft')}
           </span>
         </div>
         <Button asChild className="w-full" data-testid={`button-view-details-${property.id}`}>
           <Link href={`/property/${property.id}`}>
-            View Details
+            {t('property.viewDetails')}
           </Link>
         </Button>
       </div>
