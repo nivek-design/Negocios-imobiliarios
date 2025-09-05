@@ -222,7 +222,10 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
   createdAt: true,
   updatedAt: true,
 }).extend({
-  appointmentDate: z.string().transform((val) => new Date(val)),
+  appointmentDate: z.union([
+    z.string().transform((val) => new Date(val)),
+    z.date()
+  ]).transform((val) => val instanceof Date ? val : new Date(val)),
 });
 
 export const upsertUserSchema = createInsertSchema(users).pick({
