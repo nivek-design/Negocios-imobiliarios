@@ -4,8 +4,8 @@ let googleMapsLoader: Loader | null = null;
 let isLoaded = false;
 
 export const initializeGoogleMaps = async (): Promise<typeof google.maps> => {
-  if (isLoaded && window.google?.maps) {
-    return window.google.maps;
+  if (isLoaded && (window as any).google?.maps) {
+    return (window as any).google.maps;
   }
 
   if (!googleMapsLoader) {

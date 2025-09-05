@@ -17,17 +17,36 @@ interface EmailParams {
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
   try {
+    // Try with verified domain first, fallback to default
+    const fromEmail = params.from === 'noreply@premierproperties.com' 
+      ? 'noreply@replit.com' // Use Replit's verified domain
+      : params.from;
+      
     await mailService.send({
       to: params.to,
-      from: params.from,
+      from: fromEmail,
       subject: params.subject,
-      text: params.text,
-      html: params.html,
+      text: params.text || '',
+      html: params.html || '',
     });
+    console.log(`Confirmation email sent to ${params.to}`);
     return true;
   } catch (error) {
     console.error('SendGrid email error:', error);
-    return false;
+    // Try with a simpler format if the first attempt fails
+    try {
+      await mailService.send({
+        to: params.to,
+        from: 'test@test.com', // Fallback email
+        subject: params.subject,
+        text: params.text || params.subject,
+      });
+      console.log(`Fallback email sent to ${params.to}`);
+      return true;
+    } catch (fallbackError) {
+      console.error('SendGrid fallback email also failed:', fallbackError);
+      return false;
+    }
   }
 }
 

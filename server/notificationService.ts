@@ -129,10 +129,15 @@ _Mensagem automática - Premier Properties_`;
 
       try {
         const formattedPhone = this.formatPhoneNumber(clientPhone);
+        // Check if we should use whatsapp: prefix or not based on the from number format
+        const toNumber = whatsappFromNumber?.startsWith('whatsapp:') 
+          ? `whatsapp:${formattedPhone}` 
+          : formattedPhone;
+          
         await twilioClient.messages.create({
           body: whatsappMessage,
           from: whatsappFromNumber!,
-          to: `whatsapp:${formattedPhone}`
+          to: toNumber
         });
       } catch (error) {
         console.error('Erro ao enviar WhatsApp:', error);
@@ -222,10 +227,15 @@ _Mensagem automática - Premier Properties_`;
 
       try {
         const formattedPhone = this.formatPhoneNumber(clientPhone);
+        // Check if we should use whatsapp: prefix or not based on the from number format
+        const toNumber = whatsappFromNumber?.startsWith('whatsapp:') 
+          ? `whatsapp:${formattedPhone}` 
+          : formattedPhone;
+          
         await twilioClient.messages.create({
           body: whatsappMessage,
           from: whatsappFromNumber!,
-          to: `whatsapp:${formattedPhone}`
+          to: toNumber
         });
       } catch (error) {
         console.error('Erro ao enviar WhatsApp:', error);
@@ -315,10 +325,15 @@ _Mensagem automática - Premier Properties_`;
 
       try {
         const formattedPhone = this.formatPhoneNumber(clientPhone);
+        // Check if we should use whatsapp: prefix or not based on the from number format
+        const toNumber = whatsappFromNumber?.startsWith('whatsapp:') 
+          ? `whatsapp:${formattedPhone}` 
+          : formattedPhone;
+          
         await twilioClient.messages.create({
           body: whatsappMessage,
           from: whatsappFromNumber!,
-          to: `whatsapp:${formattedPhone}`
+          to: toNumber
         });
       } catch (error) {
         console.error('Erro ao enviar WhatsApp:', error);

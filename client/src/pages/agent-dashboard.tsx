@@ -22,7 +22,7 @@ import { ptBR } from "date-fns/locale";
 export default function AgentDashboard() {
   const { t } = useI18n();
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isPropertyFormOpen, setIsPropertyFormOpen] = useState(false);
@@ -573,7 +573,7 @@ export default function AgentDashboard() {
               <div>
                 <h2 className="text-xl font-semibold text-foreground mb-4">Calendário de Agendamentos</h2>
                 <AppointmentCalendar
-                  agentId={isAuthenticated ? "agent-id" : ""}
+                  agentId={user?.id || ""}
                   showAppointments={true}
                 />
               </div>

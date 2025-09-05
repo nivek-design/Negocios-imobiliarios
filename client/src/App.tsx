@@ -29,6 +29,7 @@ function Router() {
           <Route path="/properties" component={Properties} />
           <Route path="/property/:id" component={PropertyDetail} />
           <Route path="/dashboard" component={AgentDashboard} />
+          <Route path="/agent-dashboard" component={AgentDashboard} />
         </>
       )}
       <Route component={NotFound} />
