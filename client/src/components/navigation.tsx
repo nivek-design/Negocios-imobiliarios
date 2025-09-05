@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/contexts/I18nContext";
@@ -5,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Home, Heart, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import LanguageSelector from "@/components/language-selector";
+import LoginModal from "@/components/login-modal";
 
 export default function Navigation() {
   const { isAuthenticated, user } = useAuth();
   const { t } = useI18n();
   const [location] = useLocation();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const navItems = [
     { href: "/properties", label: t('nav.properties'), show: true },
@@ -60,13 +63,26 @@ export default function Navigation() {
                 <span className="text-sm text-muted-foreground">
                   {t('nav.welcome')}, {user?.firstName || t('nav.welcome')}
                 </span>
-                <Button asChild data-testid="button-logout">
-                  <a href="/api/logout">{t('nav.logout')}</a>
+                <Button 
+                  onClick={async () => {
+                    try {
+                      await fetch('/api/auth/logout', { method: 'POST' });
+                      window.location.reload();
+                    } catch (error) {
+                      console.error('Logout error:', error);
+                    }
+                  }}
+                  data-testid="button-logout"
+                >
+                  {t('nav.logout')}
                 </Button>
               </div>
             ) : (
-              <Button asChild data-testid="button-agent-login">
-                <a href="/api/login">{t('nav.agentLogin')}</a>
+              <Button 
+                onClick={() => setIsLoginModalOpen(true)}
+                data-testid="button-agent-login"
+              >
+                {t('nav.agentLogin')}
               </Button>
             )}
             <Sheet>
@@ -95,6 +111,10 @@ export default function Navigation() {
           </div>
         </div>
       </div>
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)} 
+      />
     </nav>
   );
 }

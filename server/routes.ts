@@ -83,14 +83,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.post('/api/auth/login', async (req, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email e senha são obrigatórios" });
+      }
+      
+      // Credenciais de teste para corretor
+      const validCredentials = [
+        { email: "corretor@premier.com", password: "123456", name: "João Silva" },
+        { email: "admin@premier.com", password: "admin123", name: "Admin Premier" },
+      ];
+      
+      const user = validCredentials.find(cred => 
+        cred.email === email && cred.password === password
+      );
+      
+      if (!user) {
+        return res.status(401).json({ message: "Credenciais inválidas" });
+      }
+      
+      // Simular uma sessão de usuário
+      const userSession = {
+        id: email === "admin@premier.com" ? "admin" : "corretor",
+        email: user.email,
+        firstName: user.name.split(' ')[0],
+        lastName: user.name.split(' ')[1] || '',
+        role: email === "admin@premier.com" ? "admin" : "agent",
+      };
+      
+      // Salvar na sessão
+      (req.session as any).user = userSession;
+      
+      res.json({
+        message: "Login realizado com sucesso",
+        user: userSession
+      });
+    } catch (error) {
+      console.error("Error during login:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.get('/api/auth/user', async (req: any, res) => {
+    try {
+      // Verificar se há usuário na sessão customizada
+      if (req.session?.user) {
+        return res.json(req.session.user);
+      }
+      
+      // Fallback para autenticação Replit se disponível
+      if (req.isAuthenticated && req.isAuthenticated() && req.user?.claims?.sub) {
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        if (user) {
+          return res.json(user);
+        }
+      }
+      
+      return res.status(401).json({ message: "Unauthorized" });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  app.post('/api/auth/logout', async (req: any, res) => {
+    try {
+      // Limpar sessão customizada
+      if (req.session?.user) {
+        req.session.destroy((err: any) => {
+          if (err) {
+            console.error("Error destroying session:", err);
+            return res.status(500).json({ message: "Erro ao fazer logout" });
+          }
+          res.clearCookie('connect.sid');
+          return res.json({ message: "Logout realizado com sucesso" });
+        });
+      } else {
+        // Fallback para logout do Replit se necessário
+        res.json({ message: "Logout realizado com sucesso" });
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 
