@@ -28,13 +28,22 @@ export function useAuth() {
       return response.json();
     },
     onSuccess: () => {
+      // Clear user data immediately
       queryClient.setQueryData(["/api/auth/user"], null);
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.clear(); // Clear all cache
+      
+      // Clear any local storage
+      localStorage.removeItem('authToken');
+      
       toast({
         title: "Logout realizado com sucesso",
         description: "Você foi desconectado do sistema.",
       });
-      setLocation('/');
+      
+      // Force page reload to ensure clean state
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
     },
     onError: (error: any) => {
       toast({

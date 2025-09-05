@@ -218,12 +218,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/auth/user', async (req: any, res) => {
     try {
-      // Verificar se há usuário na sessão customizada
+      // Check JWT token first
+      const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.authToken;
+      
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET) as any;
+          // Return user from JWT payload
+          return res.json({
+            id: decoded.id,
+            email: decoded.email,
+            firstName: decoded.firstName,
+            lastName: decoded.lastName,
+            role: decoded.role
+          });
+        } catch (error) {
+          // JWT invalid, clear cookie and continue to other auth methods
+          res.clearCookie('authToken');
+        }
+      }
+      
+      // Check session-based auth
       if (req.session?.user) {
         return res.json(req.session.user);
       }
       
-      // Fallback para autenticação Replit se disponível
+      // Fallback to Replit Auth if available
       if (req.isAuthenticated && req.isAuthenticated() && req.user?.claims?.sub) {
         const userId = req.user.claims.sub;
         const user = await storage.getUser(userId);
@@ -232,6 +252,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // No valid authentication found
       return res.status(401).json({ message: "Unauthorized" });
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -241,17 +262,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/logout', async (req: any, res) => {
     try {
-      // Clear JWT cookie
-      res.clearCookie('authToken');
+      // Clear JWT cookie with proper options
+      res.clearCookie('authToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/'
+      });
       
-      // Clear session if exists
+      // Clear session cookie
+      res.clearCookie('connect.sid', {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production'
+      });
+      
+      // Destroy session if exists
       if (req.session?.user) {
         req.session.destroy((err: any) => {
           if (err) {
             console.error("Error destroying session:", err);
             return res.status(500).json({ message: "Erro ao fazer logout" });
           }
-          res.clearCookie('connect.sid');
           return res.json({ message: "Logout realizado com sucesso" });
         });
       } else {
