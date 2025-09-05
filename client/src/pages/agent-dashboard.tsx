@@ -65,10 +65,7 @@ export default function AgentDashboard() {
   // Mutation for confirming appointments
   const confirmAppointmentMutation = useMutation({
     mutationFn: async (appointmentId: string) => {
-      await apiRequest(`/api/appointments/${appointmentId}`, {
-        method: "PUT",
-        body: { status: "confirmed" }
-      });
+      await apiRequest("PUT", `/api/appointments/${appointmentId}`, { status: "confirmed" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/agent/appointments"] });
@@ -89,10 +86,7 @@ export default function AgentDashboard() {
   // Mutation for cancelling appointments
   const cancelAppointmentMutation = useMutation({
     mutationFn: async (appointmentId: string) => {
-      await apiRequest(`/api/appointments/${appointmentId}`, {
-        method: "PUT",
-        body: { status: "cancelled" }
-      });
+      await apiRequest("PUT", `/api/appointments/${appointmentId}`, { status: "cancelled" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/agent/appointments"] });
@@ -113,10 +107,7 @@ export default function AgentDashboard() {
   // Mutation for rescheduling appointments
   const rescheduleAppointmentMutation = useMutation({
     mutationFn: async ({ appointmentId, newDateTime }: { appointmentId: string; newDateTime: string }) => {
-      await apiRequest(`/api/appointments/${appointmentId}`, {
-        method: "PUT",
-        body: { appointmentDate: newDateTime }
-      });
+      await apiRequest("PUT", `/api/appointments/${appointmentId}`, { appointmentDate: newDateTime });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/agent/appointments"] });
