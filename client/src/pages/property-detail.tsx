@@ -61,9 +61,7 @@ export default function PropertyDetail() {
   // Geocoding mutation
   const geocodeMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/properties/${id}/geocode`, {
-        method: 'POST',
-      });
+      return await apiRequest('POST', `/api/properties/${id}/geocode`);
     },
     onSuccess: () => {
       toast({
