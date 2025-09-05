@@ -300,19 +300,21 @@ export default function PropertyDetail() {
             </p>
           </div>
           
-          {/* Address Card - Always show */}
-          <div className="bg-card rounded-lg p-6 border border-border">
-            <h3 className="font-semibold text-foreground mb-3 flex items-center">
-              <MapPin className="w-5 h-5 mr-2 text-primary" />
-              Endereço Completo
-            </h3>
-            <p className="text-lg text-foreground mb-2">
-              {property.address}
-            </p>
-            <p className="text-muted-foreground">
-              {property.city}, {property.state} - CEP: {property.zipCode}
-            </p>
-          </div>
+          {/* Address Card - Always show if property exists */}
+          {property && (
+            <div className="bg-card rounded-lg p-6 border border-border">
+              <h3 className="font-semibold text-foreground mb-3 flex items-center">
+                <MapPin className="w-5 h-5 mr-2 text-primary" />
+                Endereço Completo
+              </h3>
+              <p className="text-lg text-foreground mb-2">
+                {property.address}
+              </p>
+              <p className="text-muted-foreground">
+                {property.city}, {property.state} - CEP: {property.zipCode}
+              </p>
+            </div>
+          )}
           
           {/* Map section - conditional */}
           {property?.latitude && property?.longitude ? (
