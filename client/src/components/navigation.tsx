@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/contexts/I18nContext";
@@ -5,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Home, Heart, Menu, Loader2, Shield } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import LanguageSelector from "@/components/language-selector";
+import LoginModal from "@/components/login-modal";
 
 export default function Navigation() {
   const { isAuthenticated, user, logout, isLoggingOut } = useAuth();
   const { t } = useI18n();
   const [location, setLocation] = useLocation();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const navItems = [
     { href: "/properties", label: t('nav.properties'), show: true },
@@ -80,7 +83,7 @@ export default function Navigation() {
               </div>
             ) : (
               <Button 
-                onClick={() => setLocation('/admin/login')}
+                onClick={() => setShowLoginModal(true)}
                 data-testid="button-agent-login"
                 className="bg-primary hover:bg-primary/90"
               >
@@ -114,6 +117,10 @@ export default function Navigation() {
           </div>
         </div>
       </div>
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+      />
     </nav>
   );
 }
