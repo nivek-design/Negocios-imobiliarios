@@ -17,21 +17,17 @@ function Router() {
 
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <>
-          <Route path="/" component={Landing} />
-          <Route path="/properties" component={Properties} />
-          <Route path="/property/:id" component={PropertyDetail} />
-        </>
-      ) : (
-        <>
-          <Route path="/" component={Home} />
-          <Route path="/properties" component={Properties} />
-          <Route path="/property/:id" component={PropertyDetail} />
-          <Route path="/dashboard" component={AgentDashboard} />
-          <Route path="/agent-dashboard" component={AgentDashboard} />
-        </>
-      )}
+      <>
+        <Route path="/" component={isLoading || !isAuthenticated ? Landing : Home} />
+        <Route path="/properties" component={Properties} />
+        <Route path="/property/:id" component={PropertyDetail} />
+        {(isAuthenticated && !isLoading) && (
+          <>
+            <Route path="/dashboard" component={AgentDashboard} />
+            <Route path="/agent-dashboard" component={AgentDashboard} />
+          </>
+        )}
+      </>
       <Route component={NotFound} />
     </Switch>
   );

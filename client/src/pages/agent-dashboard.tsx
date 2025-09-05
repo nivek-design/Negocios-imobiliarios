@@ -725,16 +725,20 @@ export default function AgentDashboard() {
                 <div>
                   <AppointmentCalendar
                     agentId={rescheduleAppointment.agentId}
-                    onDateSelect={(date, time) => {
-                      if (date && time) {
-                        const [hours, minutes] = time.split(':').map(Number);
-                        const appointmentDateTime = new Date(date);
-                        appointmentDateTime.setHours(hours, minutes, 0, 0);
+                    onDateSelect={(date, slots) => {
+                      if (date && slots && slots.length > 0) {
+                        // Use the first available slot for rescheduling
+                        const timeSlot = Array.isArray(slots) ? slots[0] : slots;
+                        if (typeof timeSlot === 'string') {
+                          const [hours, minutes] = timeSlot.split(':').map(Number);
+                          const appointmentDateTime = new Date(date);
+                          appointmentDateTime.setHours(hours, minutes, 0, 0);
 
-                        rescheduleAppointmentMutation.mutate({
-                          appointmentId: rescheduleAppointment.id,
-                          newDateTime: appointmentDateTime.toISOString()
-                        });
+                          rescheduleAppointmentMutation.mutate({
+                            appointmentId: rescheduleAppointment.id,
+                            newDateTime: appointmentDateTime.toISOString()
+                          });
+                        }
                       }
                     }}
                     selectedDate={undefined}
