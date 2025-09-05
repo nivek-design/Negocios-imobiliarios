@@ -41,8 +41,69 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
     agentId: property?.agentId || "",
   });
 
-  const handleInputChange = useCallback((field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, title: e.target.value }));
+  }, []);
+
+  const handlePriceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, price: e.target.value }));
+  }, []);
+
+  const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFormData(prev => ({ ...prev, description: e.target.value }));
+  }, []);
+
+  const handleAddressChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, address: e.target.value }));
+  }, []);
+
+  const handleCityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, city: e.target.value }));
+  }, []);
+
+  const handleStateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, state: e.target.value }));
+  }, []);
+
+  const handleZipCodeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, zipCode: e.target.value }));
+  }, []);
+
+  const handlePropertyTypeChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, propertyType: value as any }));
+  }, []);
+
+  const handleStatusChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, status: value as any }));
+  }, []);
+
+  const handleBedroomsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, bedrooms: parseInt(e.target.value) }));
+  }, []);
+
+  const handleBathroomsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, bathrooms: parseInt(e.target.value) }));
+  }, []);
+
+  const handleSquareFeetChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, squareFeet: parseInt(e.target.value) }));
+  }, []);
+
+  const handleGarageSpacesChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, garageSpaces: parseInt(e.target.value) || 0 }));
+  }, []);
+
+  const handleYearBuiltChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, yearBuilt: parseInt(e.target.value) || null }));
+  }, []);
+
+  const handleLotAreaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, lotArea: value ? value : null }));
+  }, []);
+
+  const handleFeatureChange = useCallback((field: string) => (checked: boolean) => {
+    setFormData(prev => ({ ...prev, [field]: checked }));
   }, []);
 
   const handleImagesUploaded = useCallback((imagePaths: string[]) => {
@@ -90,7 +151,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
               <Input
                 id="title"
                 value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
+                onChange={handleTitleChange}
                 placeholder="Casa Familiar Moderna"
                 required
                 data-testid="input-title"
@@ -103,7 +164,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 id="price"
                 type="number"
                 value={formData.price}
-                onChange={(e) => handleInputChange('price', e.target.value)}
+                onChange={handlePriceChange}
                 placeholder="750000"
                 required
                 data-testid="input-price"
@@ -116,7 +177,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
             <Textarea
               id="description"
               value={formData.description || ''}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={handleDescriptionChange}
               placeholder="Linda casa familiar moderna..."
               rows={4}
               data-testid="textarea-description"
@@ -128,7 +189,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
               <Label htmlFor="propertyType">{t('form.propertyType')}</Label>
               <Select 
                 value={formData.propertyType} 
-                onValueChange={(value) => handleInputChange('propertyType', value)}
+                onValueChange={handlePropertyTypeChange}
               >
                 <SelectTrigger data-testid="select-property-type">
                   <SelectValue />
@@ -146,7 +207,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
               <Label htmlFor="status">{t('form.status')}</Label>
               <Select 
                 value={formData.status} 
-                onValueChange={(value) => handleInputChange('status', value)}
+                onValueChange={handleStatusChange}
               >
                 <SelectTrigger data-testid="select-status">
                   <SelectValue />
@@ -169,7 +230,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 type="number"
                 min="1"
                 value={formData.bedrooms}
-                onChange={(e) => handleInputChange('bedrooms', parseInt(e.target.value))}
+                onChange={handleBedroomsChange}
                 data-testid="input-bedrooms"
               />
             </div>
@@ -181,7 +242,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 type="number"
                 min="1"
                 value={formData.bathrooms}
-                onChange={(e) => handleInputChange('bathrooms', parseInt(e.target.value))}
+                onChange={handleBathroomsChange}
                 data-testid="input-bathrooms"
               />
             </div>
@@ -193,7 +254,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 type="number"
                 min="1"
                 value={formData.squareFeet}
-                onChange={(e) => handleInputChange('squareFeet', parseInt(e.target.value))}
+                onChange={handleSquareFeetChange}
                 data-testid="input-square-feet"
               />
             </div>
@@ -205,7 +266,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
               <Input
                 id="address"
                 value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
+                onChange={handleAddressChange}
                 placeholder="Rua das Palmeiras, 123"
                 required
                 data-testid="input-address"
@@ -217,7 +278,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
               <Input
                 id="city"
                 value={formData.city}
-                onChange={(e) => handleInputChange('city', e.target.value)}
+                onChange={handleCityChange}
                 placeholder="São Paulo"
                 required
                 data-testid="input-city"
@@ -231,7 +292,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
               <Input
                 id="state"
                 value={formData.state}
-                onChange={(e) => handleInputChange('state', e.target.value)}
+                onChange={handleStateChange}
                 placeholder="SP"
                 required
                 data-testid="input-state"
@@ -243,7 +304,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
               <Input
                 id="zipCode"
                 value={formData.zipCode}
-                onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                onChange={handleZipCodeChange}
                 placeholder="01310-100"
                 data-testid="input-zip-code"
               />
@@ -306,7 +367,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                   type="number"
                   min="0"
                   value={formData.garageSpaces || 0}
-                  onChange={(e) => handleInputChange('garageSpaces', parseInt(e.target.value) || 0)}
+                  onChange={handleGarageSpacesChange}
                   data-testid="input-garage-spaces"
                 />
               </div>
@@ -318,7 +379,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                   min="1800"
                   max={new Date().getFullYear()}
                   value={formData.yearBuilt?.toString() || ''}
-                  onChange={(e) => handleInputChange('yearBuilt', parseInt(e.target.value) || null)}
+                  onChange={handleYearBuiltChange}
                   placeholder="2020"
                   data-testid="input-year-built"
                 />
@@ -331,7 +392,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                   min="0"
                   step="0.01"
                   value={formData.lotArea || ''}
-                  onChange={(e) => handleInputChange('lotArea', parseFloat(e.target.value) || null)}
+                  onChange={handleLotAreaChange}
                   placeholder="300.00"
                   data-testid="input-lot-area"
                 />
@@ -347,7 +408,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 <Checkbox
                   id="hasGarage"
                   checked={formData.hasGarage || false}
-                  onCheckedChange={(checked) => handleInputChange('hasGarage', checked)}
+                  onCheckedChange={handleFeatureChange('hasGarage')}
                   data-testid="checkbox-garage"
                 />
                 <Label htmlFor="hasGarage">Garagem</Label>
@@ -356,7 +417,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 <Checkbox
                   id="hasPool"
                   checked={formData.hasPool || false}
-                  onCheckedChange={(checked) => handleInputChange('hasPool', checked)}
+                  onCheckedChange={handleFeatureChange('hasPool')}
                   data-testid="checkbox-pool"
                 />
                 <Label htmlFor="hasPool">Piscina</Label>
@@ -365,7 +426,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 <Checkbox
                   id="hasBalcony"
                   checked={formData.hasBalcony || false}
-                  onCheckedChange={(checked) => handleInputChange('hasBalcony', checked)}
+                  onCheckedChange={handleFeatureChange('hasBalcony')}
                   data-testid="checkbox-balcony"
                 />
                 <Label htmlFor="hasBalcony">Varanda</Label>
@@ -374,7 +435,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 <Checkbox
                   id="hasGarden"
                   checked={formData.hasGarden || false}
-                  onCheckedChange={(checked) => handleInputChange('hasGarden', checked)}
+                  onCheckedChange={handleFeatureChange('hasGarden')}
                   data-testid="checkbox-garden"
                 />
                 <Label htmlFor="hasGarden">Jardim</Label>
@@ -383,7 +444,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 <Checkbox
                   id="hasAirConditioning"
                   checked={formData.hasAirConditioning || false}
-                  onCheckedChange={(checked) => handleInputChange('hasAirConditioning', checked)}
+                  onCheckedChange={handleFeatureChange('hasAirConditioning')}
                   data-testid="checkbox-air-conditioning"
                 />
                 <Label htmlFor="hasAirConditioning">Ar-condicionado</Label>
@@ -392,7 +453,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 <Checkbox
                   id="hasFireplace"
                   checked={formData.hasFireplace || false}
-                  onCheckedChange={(checked) => handleInputChange('hasFireplace', checked)}
+                  onCheckedChange={handleFeatureChange('hasFireplace')}
                   data-testid="checkbox-fireplace"
                 />
                 <Label htmlFor="hasFireplace">Lareira</Label>
@@ -401,7 +462,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 <Checkbox
                   id="hasPetsAllowed"
                   checked={formData.hasPetsAllowed || false}
-                  onCheckedChange={(checked) => handleInputChange('hasPetsAllowed', checked)}
+                  onCheckedChange={handleFeatureChange('hasPetsAllowed')}
                   data-testid="checkbox-pets-allowed"
                 />
                 <Label htmlFor="hasPetsAllowed">Aceita animais</Label>
@@ -410,7 +471,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 <Checkbox
                   id="furnished"
                   checked={formData.furnished || false}
-                  onCheckedChange={(checked) => handleInputChange('furnished', checked)}
+                  onCheckedChange={handleFeatureChange('furnished')}
                   data-testid="checkbox-furnished"
                 />
                 <Label htmlFor="furnished">Mobiliado</Label>
@@ -419,7 +480,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 <Checkbox
                   id="hasElevator"
                   checked={formData.hasElevator || false}
-                  onCheckedChange={(checked) => handleInputChange('hasElevator', checked)}
+                  onCheckedChange={handleFeatureChange('hasElevator')}
                   data-testid="checkbox-elevator"
                 />
                 <Label htmlFor="hasElevator">Elevador</Label>
@@ -428,7 +489,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 <Checkbox
                   id="hasSecurity"
                   checked={formData.hasSecurity || false}
-                  onCheckedChange={(checked) => handleInputChange('hasSecurity', checked)}
+                  onCheckedChange={handleFeatureChange('hasSecurity')}
                   data-testid="checkbox-security"
                 />
                 <Label htmlFor="hasSecurity">Segurança 24h</Label>
@@ -437,7 +498,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 <Checkbox
                   id="hasGym"
                   checked={formData.hasGym || false}
-                  onCheckedChange={(checked) => handleInputChange('hasGym', checked)}
+                  onCheckedChange={handleFeatureChange('hasGym')}
                   data-testid="checkbox-gym"
                 />
                 <Label htmlFor="hasGym">Academia</Label>
@@ -446,7 +507,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 <Checkbox
                   id="hasPlayground"
                   checked={formData.hasPlayground || false}
-                  onCheckedChange={(checked) => handleInputChange('hasPlayground', checked)}
+                  onCheckedChange={handleFeatureChange('hasPlayground')}
                   data-testid="checkbox-playground"
                 />
                 <Label htmlFor="hasPlayground">Playground</Label>
@@ -458,7 +519,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
             <Checkbox
               id="featured"
               checked={formData.featured || false}
-              onCheckedChange={(checked) => handleInputChange('featured', checked)}
+              onCheckedChange={handleFeatureChange('featured')}
               data-testid="checkbox-featured"
             />
             <Label htmlFor="featured">{t('form.featured')}</Label>

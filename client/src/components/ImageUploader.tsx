@@ -42,65 +42,80 @@ export function ImageUploader({
 }: ImageUploaderProps) {
   const { t } = useI18n();
   const [showModal, setShowModal] = useState(false);
-  const [uppy] = useState(() =>
-    new Uppy({
+  const [uppy] = useState(() => {
+    const uppyInstance = new Uppy({
       restrictions: {
         maxNumberOfFiles,
         maxFileSize,
         allowedFileTypes: ['image/*'],
       },
       autoProceed: false,
-    })
-      .use(AwsS3, {
-        shouldUseMultipart: false,
-        getUploadParameters: async () => {
-          const response = await fetch('/api/objects/upload', {
-            method: 'POST',
-            credentials: 'include',
-          });
-          if (!response.ok) {
-            throw new Error('Failed to get upload URL');
-          }
-          const data = await response.json();
-          return {
-            method: 'PUT' as const,
-            url: data.uploadURL,
-          };
-        },
-      })
-      .on("complete", async (result) => {
-        if (result.successful && result.successful.length > 0) {
-          const uploadedUrls: string[] = [];
-          
-          for (const file of result.successful) {
-            const uploadURL = file.uploadURL;
-            if (uploadURL) {
-              try {
-                // Set ACL policy for the uploaded image
-                const response = await fetch('/api/property-images', {
-                  method: 'PUT',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  credentials: 'include',
-                  body: JSON.stringify({ imageURL: uploadURL }),
-                });
-                
-                if (response.ok) {
-                  const data = await response.json();
-                  uploadedUrls.push(data.objectPath);
-                }
-              } catch (error) {
-                console.error('Error setting image ACL:', error);
+    });
+
+    uppyInstance.use(AwsS3, {
+      shouldUseMultipart: false,
+      getUploadParameters: async () => {
+        const response = await fetch('/api/objects/upload', {
+          method: 'POST',
+          credentials: 'include',
+        });
+        if (!response.ok) {
+          console.error('Failed to get upload URL:', response.status, response.statusText);
+          throw new Error('Failed to get upload URL');
+        }
+        const data = await response.json();
+        console.log('Upload URL received:', data.uploadURL);
+        return {
+          method: 'PUT' as const,
+          url: data.uploadURL,
+        };
+      },
+    });
+
+    uppyInstance.on("complete", async (result) => {
+      console.log('Upload complete:', result);
+      if (result.successful && result.successful.length > 0) {
+        const uploadedUrls: string[] = [];
+        
+        for (const file of result.successful) {
+          const uploadURL = file.uploadURL;
+          if (uploadURL) {
+            try {
+              // Set ACL policy for the uploaded image
+              const response = await fetch('/api/property-images', {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ imageURL: uploadURL }),
+              });
+              
+              if (response.ok) {
+                const data = await response.json();
+                console.log('Image ACL set, object path:', data.objectPath);
+                uploadedUrls.push(data.objectPath);
+              } else {
+                console.error('Failed to set image ACL:', response.status);
               }
+            } catch (error) {
+              console.error('Error setting image ACL:', error);
             }
           }
-          
-          onComplete?.(uploadedUrls);
-          setShowModal(false);
         }
-      })
-  );
+        
+        console.log('Final uploaded URLs:', uploadedUrls);
+        onComplete?.(uploadedUrls);
+        setShowModal(false);
+      }
+    });
+
+    uppyInstance.on("error", (error) => {
+      console.error('Uppy error:', error);
+    });
+
+    return uppyInstance;
+  });
 
   return (
     <div>
