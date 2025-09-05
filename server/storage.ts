@@ -209,41 +209,41 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      query = query.where(and(...conditions)) as any;
     }
     
     // Add sorting logic
     if (filters?.sortBy) {
       switch (filters.sortBy) {
         case 'price-low':
-          query = query.orderBy(asc(properties.price));
+          query = query.orderBy(asc(properties.price)) as any;
           break;
         case 'price-high':
-          query = query.orderBy(desc(properties.price));
+          query = query.orderBy(desc(properties.price)) as any;
           break;
         case 'newest':
-          query = query.orderBy(desc(properties.createdAt));
+          query = query.orderBy(desc(properties.createdAt)) as any;
           break;
         case 'oldest':
-          query = query.orderBy(asc(properties.createdAt));
+          query = query.orderBy(asc(properties.createdAt)) as any;
           break;
         case 'bedrooms-high':
-          query = query.orderBy(desc(properties.bedrooms));
+          query = query.orderBy(desc(properties.bedrooms)) as any;
           break;
         case 'bedrooms-low':
-          query = query.orderBy(asc(properties.bedrooms));
+          query = query.orderBy(asc(properties.bedrooms)) as any;
           break;
         case 'size-high':
-          query = query.orderBy(desc(properties.squareFeet));
+          query = query.orderBy(desc(properties.squareFeet)) as any;
           break;
         case 'size-low':
-          query = query.orderBy(asc(properties.squareFeet));
+          query = query.orderBy(asc(properties.squareFeet)) as any;
           break;
         default:
-          query = query.orderBy(desc(properties.createdAt));
+          query = query.orderBy(desc(properties.createdAt)) as any;
       }
     } else {
-      query = query.orderBy(desc(properties.createdAt));
+      query = query.orderBy(desc(properties.createdAt)) as any;
     }
     
     if (filters?.limit) {

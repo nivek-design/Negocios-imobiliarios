@@ -61,7 +61,7 @@ export default function Navigation() {
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-muted-foreground">
-                  {t('nav.welcome')}, {user?.firstName || t('nav.welcome')}
+                  {t('nav.welcome')}, {(user as any)?.firstName || t('nav.welcome')}
                 </span>
                 <Button 
                   onClick={async () => {
