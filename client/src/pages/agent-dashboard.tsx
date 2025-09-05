@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Home, Mail, Eye, Heart, Plus, Edit, Trash2, Calendar, Clock, User } from "lucide-react";
@@ -26,6 +26,8 @@ export default function AgentDashboard() {
   const queryClient = useQueryClient();
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isPropertyFormOpen, setIsPropertyFormOpen] = useState(false);
+  const [rescheduleAppointment, setRescheduleAppointment] = useState<Appointment | null>(null);
+  const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -59,6 +61,94 @@ export default function AgentDashboard() {
     enabled: isAuthenticated,
     retry: false,
   });
+
+  // Mutation for confirming appointments
+  const confirmAppointmentMutation = useMutation({
+    mutationFn: async (appointmentId: string) => {
+      await apiRequest(`/api/appointments/${appointmentId}`, {
+        method: "PUT",
+        body: { status: "confirmed" }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/agent/appointments"] });
+      toast({
+        title: "Agendamento Confirmado",
+        description: "O agendamento foi confirmado com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível confirmar o agendamento.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation for cancelling appointments
+  const cancelAppointmentMutation = useMutation({
+    mutationFn: async (appointmentId: string) => {
+      await apiRequest(`/api/appointments/${appointmentId}`, {
+        method: "PUT",
+        body: { status: "cancelled" }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/agent/appointments"] });
+      toast({
+        title: "Agendamento Cancelado",
+        description: "O agendamento foi cancelado.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível cancelar o agendamento.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation for rescheduling appointments
+  const rescheduleAppointmentMutation = useMutation({
+    mutationFn: async ({ appointmentId, newDateTime }: { appointmentId: string; newDateTime: string }) => {
+      await apiRequest(`/api/appointments/${appointmentId}`, {
+        method: "PUT",
+        body: { appointmentDate: newDateTime }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/agent/appointments"] });
+      setIsRescheduleDialogOpen(false);
+      setRescheduleAppointment(null);
+      toast({
+        title: "Agendamento Reagendado",
+        description: "O agendamento foi reagendado com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível reagendar o agendamento.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handler functions
+  const handleConfirmAppointment = (appointmentId: string) => {
+    confirmAppointmentMutation.mutate(appointmentId);
+  };
+
+  const handleCancelAppointment = (appointmentId: string) => {
+    cancelAppointmentMutation.mutate(appointmentId);
+  };
+
+  const handleRescheduleAppointment = (appointment: Appointment) => {
+    setRescheduleAppointment(appointment);
+    setIsRescheduleDialogOpen(true);
+  };
 
   const { data: metrics = { totalViews: 0, totalFavorites: 0 } } = useQuery<{ totalViews: number; totalFavorites: number }>({
     queryKey: ["/api/agent/metrics"],
@@ -556,23 +646,30 @@ export default function AgentDashboard() {
                               <Button 
                                 size="sm" 
                                 variant={appointment.status === 'confirmed' ? 'default' : 'outline'}
+                                onClick={() => handleConfirmAppointment(appointment.id)}
+                                disabled={appointment.status === 'confirmed' || appointment.status === 'cancelled' || confirmAppointmentMutation.isPending}
                                 data-testid={`button-confirm-${appointment.id}`}
                               >
-                                {appointment.status === 'confirmed' ? 'Confirmado' : 'Confirmar'}
+                                {confirmAppointmentMutation.isPending ? 'Confirmando...' : 
+                                 appointment.status === 'confirmed' ? 'Confirmado' : 'Confirmar'}
                               </Button>
                               <Button 
                                 variant="outline" 
                                 size="sm"
+                                onClick={() => handleRescheduleAppointment(appointment)}
+                                disabled={appointment.status === 'cancelled' || rescheduleAppointmentMutation.isPending}
                                 data-testid={`button-reschedule-${appointment.id}`}
                               >
-                                Reagendar
+                                {rescheduleAppointmentMutation.isPending ? 'Reagendando...' : 'Reagendar'}
                               </Button>
                               <Button 
                                 variant="outline" 
                                 size="sm"
+                                onClick={() => handleCancelAppointment(appointment.id)}
+                                disabled={appointment.status === 'cancelled' || cancelAppointmentMutation.isPending}
                                 data-testid={`button-cancel-${appointment.id}`}
                               >
-                                Cancelar
+                                {cancelAppointmentMutation.isPending ? 'Cancelando...' : 'Cancelar'}
                               </Button>
                             </div>
                             
@@ -609,6 +706,63 @@ export default function AgentDashboard() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Reschedule Dialog */}
+        <Dialog open={isRescheduleDialogOpen} onOpenChange={setIsRescheduleDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <Calendar className="w-5 h-5 mr-2 text-primary" />
+                Reagendar Agendamento
+              </DialogTitle>
+              <DialogDescription>
+                {rescheduleAppointment && (
+                  <>Reagendar visita de <strong>{rescheduleAppointment.clientName}</strong></>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+
+            {rescheduleAppointment && (
+              <div className="space-y-4">
+                <div className="bg-muted/50 rounded-lg p-4 border border-border">
+                  <h4 className="font-medium text-foreground mb-2">Agendamento Atual</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {format(parseISO(rescheduleAppointment.appointmentDate), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                  </p>
+                </div>
+
+                <div>
+                  <AppointmentCalendar
+                    agentId={rescheduleAppointment.agentId}
+                    onDateSelect={(date, time) => {
+                      if (date && time) {
+                        const [hours, minutes] = time.split(':').map(Number);
+                        const appointmentDateTime = new Date(date);
+                        appointmentDateTime.setHours(hours, minutes, 0, 0);
+
+                        rescheduleAppointmentMutation.mutate({
+                          appointmentId: rescheduleAppointment.id,
+                          newDateTime: appointmentDateTime.toISOString()
+                        });
+                      }
+                    }}
+                    selectedDate={undefined}
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsRescheduleDialogOpen(false)}
+                    disabled={rescheduleAppointmentMutation.isPending}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

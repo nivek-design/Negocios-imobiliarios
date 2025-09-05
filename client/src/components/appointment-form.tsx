@@ -174,7 +174,7 @@ export default function AppointmentForm({
           <div className="space-y-4">
             <AppointmentCalendar
               agentId={agentId}
-              onDateSelect={handleDateSelect}
+              onDateSelect={(date, time) => handleDateSelect(date, [])}
               selectedDate={selectedDate}
             />
             

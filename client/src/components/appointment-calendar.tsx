@@ -10,7 +10,7 @@ import type { Appointment } from '@shared/schema';
 
 interface AppointmentCalendarProps {
   agentId: string;
-  onDateSelect?: (date: Date, availableSlots: string[]) => void;
+  onDateSelect?: (date: Date, time?: string) => void;
   selectedDate?: Date;
   showAppointments?: boolean;
 }
@@ -139,6 +139,11 @@ export default function AppointmentCalendar({
                   variant="outline"
                   size="sm"
                   className="text-xs"
+                  onClick={() => {
+                    if (date && onDateSelect) {
+                      onDateSelect(date, slot);
+                    }
+                  }}
                   data-testid={`time-slot-${slot}`}
                 >
                   {formatTime(slot)}
