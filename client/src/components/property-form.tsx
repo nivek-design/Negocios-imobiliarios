@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,23 +41,23 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
     agentId: property?.agentId || "",
   });
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = useCallback((field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
-  const handleImagesUploaded = (imagePaths: string[]) => {
+  const handleImagesUploaded = useCallback((imagePaths: string[]) => {
     setFormData(prev => ({
       ...prev,
       images: [...(prev.images || []), ...imagePaths]
     }));
-  };
+  }, []);
 
-  const removeImage = (index: number) => {
+  const removeImage = useCallback((index: number) => {
     setFormData(prev => ({
       ...prev,
       images: prev.images?.filter((_, i) => i !== index) || []
     }));
-  };
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

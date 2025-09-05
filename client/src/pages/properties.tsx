@@ -15,6 +15,7 @@ export default function Properties() {
   const { t } = useI18n();
   const [location] = useLocation();
   const [filters, setFilters] = useState<any>({});
+  const [searchInput, setSearchInput] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const propertiesPerPage = 12;
@@ -33,7 +34,17 @@ export default function Properties() {
     });
     
     setFilters(initialFilters);
+    setSearchInput(initialFilters.search || "");
   }, [location]);
+
+  // Sync search input with filters with debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setFilters(prev => ({ ...prev, search: searchInput }));
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchInput]);
 
   const buildQueryParams = () => {
     const params = new URLSearchParams();
@@ -97,11 +108,8 @@ export default function Properties() {
             <Input
               type="text"
               placeholder="Digite uma cidade, bairro ou endereço..."
-              value={filters.search || ""}
-              onChange={(e) => {
-                const newFilters = { ...filters, search: e.target.value };
-                setFilters(newFilters);
-              }}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="flex-1 h-12 text-lg bg-white text-black"
               data-testid="input-location-search"
             />
