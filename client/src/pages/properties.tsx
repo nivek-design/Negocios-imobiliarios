@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import Navigation from "@/components/navigation";
 import PropertyCard from "@/components/property-card";
 import PropertySearch from "@/components/property-search";
+import Map from "@/components/map";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Grid, MapIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +20,7 @@ export default function Properties() {
   const [searchInput, setSearchInput] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const propertiesPerPage = 12;
 
   // Parse URL parameters
@@ -146,6 +149,31 @@ export default function Properties() {
                   <span className="text-muted-foreground" data-testid="text-results-count">
                     {properties.length} {t('search.propertiesFound')}
                   </span>
+                  
+                  {/* View Mode Toggle */}
+                  <div className="flex bg-muted rounded-lg p-1">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('grid')}
+                      className="px-3 py-1"
+                      data-testid="button-view-grid"
+                    >
+                      <Grid className="w-4 h-4 mr-1" />
+                      Grade
+                    </Button>
+                    <Button
+                      variant={viewMode === 'map' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('map')}
+                      className="px-3 py-1"
+                      data-testid="button-view-map"
+                    >
+                      <MapIcon className="w-4 h-4 mr-1" />
+                      Mapa
+                    </Button>
+                  </div>
+                  
                   <Select value={sortBy} onValueChange={handleSortChange}>
                     <SelectTrigger className="w-48" data-testid="select-sort">
                       <SelectValue placeholder={t('search.sortBy')} />
@@ -164,40 +192,64 @@ export default function Properties() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {isLoading ? (
-                  Array.from({ length: propertiesPerPage }).map((_, i) => (
-                    <div key={i} className="bg-card rounded-lg shadow-lg overflow-hidden border border-border">
-                      <Skeleton className="h-48 w-full" />
-                      <div className="p-4 space-y-3">
-                        <Skeleton className="h-5 w-3/4" />
-                        <Skeleton className="h-4 w-1/2" />
-                        <div className="flex justify-between">
-                          <Skeleton className="h-4 w-12" />
-                          <Skeleton className="h-4 w-12" />
-                          <Skeleton className="h-4 w-12" />
+{viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {isLoading ? (
+                    Array.from({ length: propertiesPerPage }).map((_, i) => (
+                      <div key={i} className="bg-card rounded-lg shadow-lg overflow-hidden border border-border">
+                        <Skeleton className="h-48 w-full" />
+                        <div className="p-4 space-y-3">
+                          <Skeleton className="h-5 w-3/4" />
+                          <Skeleton className="h-4 w-1/2" />
+                          <div className="flex justify-between">
+                            <Skeleton className="h-4 w-12" />
+                            <Skeleton className="h-4 w-12" />
+                            <Skeleton className="h-4 w-12" />
+                          </div>
                         </div>
                       </div>
+                    ))
+                  ) : properties.length > 0 ? (
+                    properties.map((property) => (
+                      <PropertyCard key={property.id} property={property} />
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-12">
+                      <p className="text-muted-foreground text-lg" data-testid="text-no-properties">
+                        {t('common.noResults')}.
+                      </p>
+                      <p className="text-muted-foreground mt-2">
+                        {t('common.tryAdjustFilters')}
+                      </p>
                     </div>
-                  ))
-                ) : properties.length > 0 ? (
-                  properties.map((property) => (
-                    <PropertyCard key={property.id} property={property} />
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-12">
-                    <p className="text-muted-foreground text-lg" data-testid="text-no-properties">
-                      {t('common.noResults')}.
-                    </p>
-                    <p className="text-muted-foreground mt-2">
-                      {t('common.tryAdjustFilters')}
-                    </p>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              ) : (
+                <div className="w-full">
+                  {isLoading ? (
+                    <Skeleton className="w-full h-96 rounded-lg" />
+                  ) : properties.length > 0 ? (
+                    <Map
+                      properties={properties}
+                      height="600px"
+                      className="shadow-lg rounded-lg"
+                      showPropertyDetails={true}
+                    />
+                  ) : (
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground text-lg" data-testid="text-no-properties">
+                        {t('common.noResults')}.
+                      </p>
+                      <p className="text-muted-foreground mt-2">
+                        {t('common.tryAdjustFilters')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
-              {/* Pagination */}
-              {properties.length >= propertiesPerPage && (
+              {/* Pagination - only show in grid view */}
+              {viewMode === 'grid' && properties.length >= propertiesPerPage && (
                 <div className="mt-8 flex justify-center">
                   <nav className="flex space-x-2">
                     <Button

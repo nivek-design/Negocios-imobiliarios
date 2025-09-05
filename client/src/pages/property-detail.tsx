@@ -4,6 +4,8 @@ import Navigation from "@/components/navigation";
 import InquiryForm from "@/components/inquiry-form";
 import FavoriteButton from "@/components/favorite-button";
 import ImageGallery from "@/components/image-gallery";
+import Map from "@/components/map";
+import NeighborhoodInfo from "@/components/neighborhood-info";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -259,6 +261,35 @@ export default function PropertyDetail() {
             </div>
           </div>
         ) : null}
+
+        {/* Map and Location Section */}
+        {property?.latitude && property?.longitude && (
+          <div className="mt-12 space-y-8">
+            <h2 className="text-2xl font-bold text-foreground mb-6">Localização e Mapa</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div>
+                <Map
+                  properties={[property]}
+                  center={{
+                    lat: parseFloat(property.latitude),
+                    lng: parseFloat(property.longitude),
+                  }}
+                  zoom={15}
+                  height="400px"
+                  className="shadow-lg"
+                />
+              </div>
+              
+              <div>
+                <NeighborhoodInfo
+                  latitude={parseFloat(property.latitude)}
+                  longitude={parseFloat(property.longitude)}
+                  className="h-full"
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Image Gallery Modal */}
