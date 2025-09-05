@@ -211,7 +211,7 @@ export default function AppointmentForm({
 
             {/* Time Selection */}
             <div>
-              <FormLabel className="text-sm font-medium">Selecionar Horário *</FormLabel>
+              <label className="text-sm font-medium">Selecionar Horário *</label>
               <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mt-2">
                 {availableSlots.map((slot) => (
                   <Button
