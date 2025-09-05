@@ -13,6 +13,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
+  // Custom authentication middleware that works with both custom and Replit auth
+  const customIsAuthenticated = (req: any, res: any, next: any) => {
+    // Check custom session first
+    if (req.session?.user) {
+      return next();
+    }
+    
+    // Fallback to Replit auth
+    return isAuthenticated(req, res, next);
+  };
+
   // Object storage service routes
   app.get("/public-objects/:filePath(*)", async (req, res) => {
     const filePath = req.params.filePath;
@@ -119,7 +130,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({
         message: "Login realizado com sucesso",
-        user: userSession
+        user: userSession,
+        redirectToReplit: true,
+        replitAuthUrl: "/api/login"
       });
     } catch (error) {
       console.error("Error during login:", error);
@@ -378,9 +391,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/agent/properties", isAuthenticated, async (req: any, res) => {
+  app.get("/api/agent/properties", customIsAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      // Get user ID from custom session or Replit session
+      const userId = req.session?.user?.id || req.user?.claims?.sub;
       const properties = await storage.getPropertiesByAgent(userId);
       res.json(properties);
     } catch (error) {
@@ -404,9 +418,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/agent/inquiries", isAuthenticated, async (req: any, res) => {
+  app.get("/api/agent/inquiries", customIsAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      // Get user ID from custom session or Replit session
+      const userId = req.session?.user?.id || req.user?.claims?.sub;
       const inquiries = await storage.getInquiriesByAgent(userId);
       res.json(inquiries);
     } catch (error) {
@@ -416,9 +431,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get agent metrics
-  app.get("/api/agent/metrics", isAuthenticated, async (req: any, res) => {
+  app.get("/api/agent/metrics", customIsAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      // Get user ID from custom session or Replit session
+      const userId = req.session?.user?.id || req.user?.claims?.sub;
       const metrics = await storage.getAgentMetrics(userId);
       res.json(metrics);
     } catch (error) {
@@ -551,9 +567,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get agent's appointments
-  app.get("/api/agent/appointments", isAuthenticated, async (req: any, res) => {
+  app.get("/api/agent/appointments", customIsAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      // Get user ID from custom session or Replit session
+      const userId = req.session?.user?.id || req.user?.claims?.sub;
       const appointments = await storage.getAppointmentsByAgent(userId);
       res.json(appointments);
     } catch (error) {

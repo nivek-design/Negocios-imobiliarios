@@ -45,16 +45,21 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       
       return await response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       toast({
         title: "Login realizado com sucesso!",
-        description: "Bem-vindo de volta ao sistema.",
+        description: "Redirecionando para autenticação do Replit...",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       onClose();
       setFormData({ email: "", password: "" });
-      // Redirect to dashboard
-      window.location.reload();
+      
+      // Redirecionar para autenticação do Replit
+      if (data.redirectToReplit && data.replitAuthUrl) {
+        window.location.href = data.replitAuthUrl;
+      } else {
+        window.location.reload();
+      }
     },
     onError: (error: any) => {
       toast({
