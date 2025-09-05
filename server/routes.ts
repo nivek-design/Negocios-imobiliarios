@@ -98,15 +98,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/properties", async (req, res) => {
     try {
       const filters = {
-        search: req.query.search as string,
-        keyword: req.query.keyword as string,
-        propertyType: req.query.propertyType as string,
-        status: req.query.status as string,
-        city: req.query.city as string,
+        search: req.query.search && req.query.search !== '' ? req.query.search as string : undefined,
+        keyword: req.query.keyword && req.query.keyword !== '' ? req.query.keyword as string : undefined,
+        propertyType: Array.isArray(req.query.propertyType) && req.query.propertyType.length > 0 ? req.query.propertyType as string[] : undefined,
+        status: req.query.status && req.query.status !== 'all' && req.query.status !== '' ? req.query.status as string : undefined,
+        city: req.query.city && req.query.city !== '' ? req.query.city as string : undefined,
         minPrice: req.query.minPrice ? parseInt(req.query.minPrice as string) : undefined,
         maxPrice: req.query.maxPrice ? parseInt(req.query.maxPrice as string) : undefined,
-        bedrooms: req.query.bedrooms ? parseInt(req.query.bedrooms as string) : undefined,
-        bathrooms: req.query.bathrooms ? parseInt(req.query.bathrooms as string) : undefined,
+        bedrooms: req.query.bedrooms && req.query.bedrooms !== 'any' && req.query.bedrooms !== '' ? parseInt(req.query.bedrooms as string) : undefined,
+        bathrooms: req.query.bathrooms && req.query.bathrooms !== 'any' && req.query.bathrooms !== '' ? parseInt(req.query.bathrooms as string) : undefined,
         // Location filters
         latitude: req.query.latitude ? parseFloat(req.query.latitude as string) : undefined,
         longitude: req.query.longitude ? parseFloat(req.query.longitude as string) : undefined,

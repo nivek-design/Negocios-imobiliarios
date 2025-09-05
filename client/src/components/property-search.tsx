@@ -73,6 +73,11 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
       bedrooms: "any",
       bathrooms: "any",
       status: "all",
+      radius: "50",
+      minGarageSpaces: "",
+      minYearBuilt: "",
+      maxYearBuilt: "",
+      minLotArea: "",
       hasGarage: false,
       hasPool: false,
       hasBalcony: false,
@@ -80,6 +85,11 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
       hasAirConditioning: false,
       hasFireplace: false,
       hasPetsAllowed: false,
+      furnished: false,
+      hasElevator: false,
+      hasSecurity: false,
+      hasGym: false,
+      hasPlayground: false,
     });
   };
 

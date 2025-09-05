@@ -76,7 +76,7 @@ export interface IStorage {
 export interface PropertyFilters {
   search?: string;
   keyword?: string; // Search in title and description
-  propertyType?: string;
+  propertyType?: string[] | string;
   status?: string;
   city?: string;
   minPrice?: number;
@@ -148,7 +148,11 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (filters?.propertyType) {
-      conditions.push(eq(properties.propertyType, filters.propertyType as any));
+      if (Array.isArray(filters.propertyType)) {
+        conditions.push(inArray(properties.propertyType, filters.propertyType as any[]));
+      } else {
+        conditions.push(eq(properties.propertyType, filters.propertyType as any));
+      }
     }
     
     if (filters?.status) {
