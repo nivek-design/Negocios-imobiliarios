@@ -50,7 +50,7 @@ export default function AppointmentCalendar({
         onDateSelect(date, slots);
       }
     }
-  }, [slots, date, onDateSelect]);
+  }, [slots, date]); // Removed onDateSelect from dependencies to prevent infinite loop
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (!selectedDate) return;
