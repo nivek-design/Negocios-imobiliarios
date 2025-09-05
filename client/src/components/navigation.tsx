@@ -30,10 +30,10 @@ export default function Navigation() {
               className="flex items-center"
               data-testid="link-home"
             >
-              <img 
-                src={kalrossLogo} 
-                alt="Kalross Negócios Imobiliários" 
-                className="h-10 w-auto"
+              <img
+                src={kalrossLogo}
+                alt="Kalross Negócios Imobiliários"
+                className="h-16 w-auto"
               />
             </Link>
             <div className="hidden md:flex space-x-6">
