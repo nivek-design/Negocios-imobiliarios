@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/contexts/I18nContext";
+import { ImageUploader } from "@/components/ImageUploader";
+import { X } from "lucide-react";
 import type { Property, InsertProperty } from "@shared/schema";
 
 interface PropertyFormProps {
@@ -16,6 +19,7 @@ interface PropertyFormProps {
 }
 
 export default function PropertyForm({ property, onSubmit, isLoading }: PropertyFormProps) {
+  const { t } = useI18n();
   const { toast } = useToast();
   const [formData, setFormData] = useState<InsertProperty>({
     title: property?.title || "",
@@ -30,15 +34,29 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
     city: property?.city || "",
     state: property?.state || "",
     zipCode: property?.zipCode || "",
-    latitude: property?.latitude || null,
-    longitude: property?.longitude || null,
+    latitude: property?.latitude ? property.latitude.toString() : null,
+    longitude: property?.longitude ? property.longitude.toString() : null,
     images: property?.images || [],
-    featured: property?.featured || false,
+    featured: !!property?.featured,
     agentId: property?.agentId || "",
   });
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleImagesUploaded = (imagePaths: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      images: [...(prev.images || []), ...imagePaths]
+    }));
+  };
+
+  const removeImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images?.filter((_, i) => i !== index) || []
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -47,8 +65,8 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
     // Basic validation
     if (!formData.title || !formData.address || !formData.city || !formData.state) {
       toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields",
+        title: t('inquiry.validationError'),
+        description: t('inquiry.requiredFields'),
         variant: "destructive",
       });
       return;
@@ -61,14 +79,14 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
     <Card>
       <CardHeader>
         <CardTitle data-testid="text-property-form-title">
-          {property ? 'Edit Property' : 'Add New Property'}
+          {property ? t('form.editProperty') : t('form.addProperty')}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title">{t('form.title')}</Label>
               <Input
                 id="title"
                 value={formData.title}
@@ -80,7 +98,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
             </div>
             
             <div>
-              <Label htmlFor="price">Price *</Label>
+              <Label htmlFor="price">{t('form.price')}</Label>
               <Input
                 id="price"
                 type="number"
@@ -94,7 +112,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
           </div>
 
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t('form.description')}</Label>
             <Textarea
               id="description"
               value={formData.description}
@@ -107,7 +125,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="propertyType">Property Type</Label>
+              <Label htmlFor="propertyType">{t('form.propertyType')}</Label>
               <Select 
                 value={formData.propertyType} 
                 onValueChange={(value) => handleInputChange('propertyType', value)}
@@ -125,7 +143,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
             </div>
 
             <div>
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">{t('form.status')}</Label>
               <Select 
                 value={formData.status} 
                 onValueChange={(value) => handleInputChange('status', value)}
@@ -145,7 +163,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="bedrooms">Bedrooms</Label>
+              <Label htmlFor="bedrooms">{t('form.bedrooms')}</Label>
               <Input
                 id="bedrooms"
                 type="number"
@@ -157,7 +175,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
             </div>
 
             <div>
-              <Label htmlFor="bathrooms">Bathrooms</Label>
+              <Label htmlFor="bathrooms">{t('form.bathrooms')}</Label>
               <Input
                 id="bathrooms"
                 type="number"
@@ -169,7 +187,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
             </div>
 
             <div>
-              <Label htmlFor="squareFeet">Square Feet</Label>
+              <Label htmlFor="squareFeet">{t('form.squareFeet')}</Label>
               <Input
                 id="squareFeet"
                 type="number"
@@ -183,24 +201,24 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="address">Address *</Label>
+              <Label htmlFor="address">{t('form.address')}</Label>
               <Input
                 id="address"
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="123 Oak Street"
+                placeholder="Rua das Palmeiras, 123"
                 required
                 data-testid="input-address"
               />
             </div>
 
             <div>
-              <Label htmlFor="city">City *</Label>
+              <Label htmlFor="city">{t('form.city')}</Label>
               <Input
                 id="city"
                 value={formData.city}
                 onChange={(e) => handleInputChange('city', e.target.value)}
-                placeholder="San Francisco"
+                placeholder="São Paulo"
                 required
                 data-testid="input-city"
               />
@@ -209,26 +227,71 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="state">State *</Label>
+              <Label htmlFor="state">{t('form.state')}</Label>
               <Input
                 id="state"
                 value={formData.state}
                 onChange={(e) => handleInputChange('state', e.target.value)}
-                placeholder="CA"
+                placeholder="SP"
                 required
                 data-testid="input-state"
               />
             </div>
 
             <div>
-              <Label htmlFor="zipCode">ZIP Code</Label>
+              <Label htmlFor="zipCode">{t('form.zipCode')}</Label>
               <Input
                 id="zipCode"
                 value={formData.zipCode}
                 onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                placeholder="94102"
+                placeholder="01310-100"
                 data-testid="input-zip-code"
               />
+            </div>
+          </div>
+
+          {/* Image Upload Section */}
+          <div className="space-y-4">
+            <Label>{t('form.propertyImages')}</Label>
+            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+              <div className="text-center space-y-4">
+                <ImageUploader
+                  maxNumberOfFiles={10}
+                  onComplete={handleImagesUploaded}
+                  disabled={isLoading}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {t('form.imageUploadNote')}
+                </p>
+              </div>
+              
+              {/* Display uploaded images */}
+              {formData.images && formData.images.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium mb-3">
+                    {formData.images.length} {t('form.imagesUploaded')}
+                  </p>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                    {formData.images.map((image, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={image.startsWith('/objects/') ? image : `/objects/${image}`}
+                          alt={`Property ${index + 1}`}
+                          className="w-full h-20 object-cover rounded border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          data-testid={`button-remove-image-${index}`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -239,7 +302,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
               onCheckedChange={(checked) => handleInputChange('featured', checked)}
               data-testid="checkbox-featured"
             />
-            <Label htmlFor="featured">Featured Property</Label>
+            <Label htmlFor="featured">{t('form.featured')}</Label>
           </div>
 
           <Button 
@@ -248,7 +311,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
             className="w-full"
             data-testid="button-submit-property"
           >
-            {isLoading ? 'Saving...' : (property ? 'Update Property' : 'Create Property')}
+            {isLoading ? t('form.saving') : (property ? t('form.update') : t('form.create'))}
           </Button>
         </form>
       </CardContent>

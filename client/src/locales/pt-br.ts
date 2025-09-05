@@ -136,6 +136,11 @@ export default {
   'form.updateSuccess': 'Imóvel atualizado com sucesso',
   'form.deleteSuccess': 'Imóvel excluído com sucesso',
   'form.deleteConfirm': 'Tem certeza de que deseja excluir este imóvel?',
+  'form.uploadImages': 'Fazer Upload de Imagens',
+  'form.imageUploadNote': 'Carregue até 10 imagens do imóvel. Tamanho máximo: 10MB por imagem.',
+  'form.imagesUploaded': 'imagens carregadas',
+  'form.noImages': 'Nenhuma imagem carregada',
+  'form.propertyImages': 'Imagens do Imóvel',
 
   // Footer
   'footer.company': 'Premier Properties',
