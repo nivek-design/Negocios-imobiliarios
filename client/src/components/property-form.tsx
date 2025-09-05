@@ -345,6 +345,69 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
+                  id="hasGarage"
+                  checked={formData.hasGarage || false}
+                  onCheckedChange={(checked) => handleInputChange('hasGarage', checked)}
+                  data-testid="checkbox-garage"
+                />
+                <Label htmlFor="hasGarage">Garagem</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hasPool"
+                  checked={formData.hasPool || false}
+                  onCheckedChange={(checked) => handleInputChange('hasPool', checked)}
+                  data-testid="checkbox-pool"
+                />
+                <Label htmlFor="hasPool">Piscina</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hasBalcony"
+                  checked={formData.hasBalcony || false}
+                  onCheckedChange={(checked) => handleInputChange('hasBalcony', checked)}
+                  data-testid="checkbox-balcony"
+                />
+                <Label htmlFor="hasBalcony">Varanda</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hasGarden"
+                  checked={formData.hasGarden || false}
+                  onCheckedChange={(checked) => handleInputChange('hasGarden', checked)}
+                  data-testid="checkbox-garden"
+                />
+                <Label htmlFor="hasGarden">Jardim</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hasAirConditioning"
+                  checked={formData.hasAirConditioning || false}
+                  onCheckedChange={(checked) => handleInputChange('hasAirConditioning', checked)}
+                  data-testid="checkbox-air-conditioning"
+                />
+                <Label htmlFor="hasAirConditioning">Ar-condicionado</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hasFireplace"
+                  checked={formData.hasFireplace || false}
+                  onCheckedChange={(checked) => handleInputChange('hasFireplace', checked)}
+                  data-testid="checkbox-fireplace"
+                />
+                <Label htmlFor="hasFireplace">Lareira</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hasPetsAllowed"
+                  checked={formData.hasPetsAllowed || false}
+                  onCheckedChange={(checked) => handleInputChange('hasPetsAllowed', checked)}
+                  data-testid="checkbox-pets-allowed"
+                />
+                <Label htmlFor="hasPetsAllowed">Aceita animais</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
                   id="furnished"
                   checked={formData.furnished || false}
                   onCheckedChange={(checked) => handleInputChange('furnished', checked)}
