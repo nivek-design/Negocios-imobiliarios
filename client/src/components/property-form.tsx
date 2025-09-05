@@ -91,7 +91,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                 id="title"
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
-                placeholder="Modern Family Home"
+                placeholder="Casa Familiar Moderna"
                 required
                 data-testid="input-title"
               />
@@ -117,7 +117,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
               id="description"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Beautiful modern family home..."
+              placeholder="Linda casa familiar moderna..."
               rows={4}
               data-testid="textarea-description"
             />
@@ -134,10 +134,10 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="house">House</SelectItem>
-                  <SelectItem value="condo">Condo</SelectItem>
-                  <SelectItem value="townhouse">Townhouse</SelectItem>
-                  <SelectItem value="apartment">Apartment</SelectItem>
+                  <SelectItem value="house">Casa</SelectItem>
+                  <SelectItem value="condo">Apartamento</SelectItem>
+                  <SelectItem value="townhouse">Sobrado</SelectItem>
+                  <SelectItem value="apartment">Apartamento</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -152,10 +152,10 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="for_sale">For Sale</SelectItem>
-                  <SelectItem value="for_rent">For Rent</SelectItem>
-                  <SelectItem value="sold">Sold</SelectItem>
-                  <SelectItem value="rented">Rented</SelectItem>
+                  <SelectItem value="for_sale">À Venda</SelectItem>
+                  <SelectItem value="for_rent">Para Alugar</SelectItem>
+                  <SelectItem value="sold">Vendido</SelectItem>
+                  <SelectItem value="rented">Alugado</SelectItem>
                 </SelectContent>
               </Select>
             </div>

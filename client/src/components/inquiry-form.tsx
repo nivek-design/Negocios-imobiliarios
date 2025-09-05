@@ -91,7 +91,7 @@ export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormPr
                 id="firstName"
                 value={formData.firstName}
                 onChange={(e) => handleInputChange('firstName', e.target.value)}
-                placeholder="First Name"
+                placeholder="Nome"
                 required
                 data-testid="input-first-name"
               />
@@ -102,7 +102,7 @@ export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormPr
                 id="lastName"
                 value={formData.lastName}
                 onChange={(e) => handleInputChange('lastName', e.target.value)}
-                placeholder="Last Name"
+                placeholder="Sobrenome"
                 required
                 data-testid="input-last-name"
               />
@@ -116,7 +116,7 @@ export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormPr
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              placeholder="Email Address"
+              placeholder="Endereço de Email"
               required
               data-testid="input-email"
             />
@@ -129,7 +129,7 @@ export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormPr
               type="tel"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="Phone Number"
+              placeholder="Número de Telefone"
               data-testid="input-phone"
             />
           </div>

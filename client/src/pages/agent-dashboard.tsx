@@ -185,8 +185,8 @@ export default function AgentDashboard() {
     },
     onSuccess: () => {
       toast({
-        title: "Success", 
-        description: "Property updated successfully",
+        title: "Sucesso", 
+        description: "Imóvel atualizado com sucesso",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/agent/properties"] });
       setIsPropertyFormOpen(false);
@@ -205,8 +205,8 @@ export default function AgentDashboard() {
         return;
       }
       toast({
-        title: "Error",
-        description: "Failed to update property",
+        title: "Erro",
+        description: "Falha ao atualizar imóvel",
         variant: "destructive",
       });
     },
@@ -218,7 +218,7 @@ export default function AgentDashboard() {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
+        title: "Sucesso",
         description: t('property.deletedSuccessfully'),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/agent/properties"] });
@@ -236,7 +236,7 @@ export default function AgentDashboard() {
         return;
       }
       toast({
-        title: "Error",
+        title: "Erro",
         description: t('property.failedToDelete'),
         variant: "destructive",
       });
@@ -337,7 +337,7 @@ export default function AgentDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-muted-foreground text-sm">Total Views</p>
+                  <p className="text-muted-foreground text-sm">Total de Visualizações</p>
                   <p className="text-3xl font-bold text-foreground" data-testid="text-total-views">
                     {metrics.totalViews}
                   </p>
@@ -353,7 +353,7 @@ export default function AgentDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-muted-foreground text-sm">Favorites</p>
+                  <p className="text-muted-foreground text-sm">Favoritos</p>
                   <p className="text-3xl font-bold text-foreground" data-testid="text-total-favorites">
                     {metrics.totalFavorites}
                   </p>
@@ -368,8 +368,8 @@ export default function AgentDashboard() {
 
         <Tabs defaultValue="properties" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="properties" data-testid="tab-properties">Properties</TabsTrigger>
-            <TabsTrigger value="inquiries" data-testid="tab-inquiries">Inquiries</TabsTrigger>
+            <TabsTrigger value="properties" data-testid="tab-properties">Imóveis</TabsTrigger>
+            <TabsTrigger value="inquiries" data-testid="tab-inquiries">Consultas</TabsTrigger>
             <TabsTrigger value="appointments" data-testid="tab-appointments">
               <Calendar className="w-4 h-4 mr-2" />
               Agendamentos
@@ -378,18 +378,18 @@ export default function AgentDashboard() {
           
           <TabsContent value="properties" className="space-y-4">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-foreground">Your Listings</h2>
+              <h2 className="text-xl font-semibold text-foreground">Seus Imóveis</h2>
               <Dialog open={isPropertyFormOpen} onOpenChange={setIsPropertyFormOpen}>
                 <DialogTrigger asChild>
                   <Button onClick={() => setSelectedProperty(null)} data-testid="button-add-property">
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Property
+                    Adicionar Imóvel
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
-                      {selectedProperty ? 'Edit Property' : 'Add New Property'}
+                      {selectedProperty ? 'Editar Imóvel' : 'Adicionar Novo Imóvel'}
                     </DialogTitle>
                   </DialogHeader>
                   <PropertyForm
@@ -491,7 +491,7 @@ export default function AgentDashboard() {
                 <Card>
                   <CardContent className="p-8 text-center">
                     <p className="text-muted-foreground" data-testid="text-no-properties">
-                      No properties yet. Add your first property to get started.
+                      Nenhum imóvel ainda. Adicione seu primeiro imóvel para começar.
                     </p>
                   </CardContent>
                 </Card>
@@ -535,10 +535,10 @@ export default function AgentDashboard() {
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">
-                        Interested in: {inquiry.propertyTitle}
+                        Interessado em: {inquiry.propertyTitle}
                       </p>
                       <p className="text-sm text-foreground mb-3" data-testid={`text-inquiry-message-${inquiry.id}`}>
-                        {inquiry.message || "No message provided"}
+                        {inquiry.message || "Nenhuma mensagem fornecida"}
                       </p>
                       <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-3">
                         <span>📧 {inquiry.email}</span>
@@ -546,10 +546,10 @@ export default function AgentDashboard() {
                       </div>
                       <div className="flex space-x-2">
                         <Button size="sm" data-testid={`button-reply-${inquiry.id}`}>
-                          Reply
+                          Responder
                         </Button>
                         <Button variant="outline" size="sm" data-testid={`button-schedule-${inquiry.id}`}>
-                          Schedule Tour
+                          Agendar Visita
                         </Button>
                       </div>
                     </CardContent>
@@ -559,7 +559,7 @@ export default function AgentDashboard() {
                 <Card>
                   <CardContent className="p-8 text-center">
                     <p className="text-muted-foreground" data-testid="text-no-inquiries">
-                      No inquiries yet. Once visitors start inquiring about your properties, they'll appear here.
+                      Nenhuma consulta ainda. Quando visitantes começarem a consultar sobre seus imóveis, elas aparecerão aqui.
                     </p>
                   </CardContent>
                 </Card>

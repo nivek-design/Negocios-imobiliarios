@@ -146,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const property = await storage.getProperty(req.params.id);
       if (!property) {
-        return res.status(404).json({ message: "Property not found" });
+        return res.status(404).json({ message: "Imóvel não encontrado" });
       }
       res.json(property);
     } catch (error) {
@@ -189,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({ success: true });
     } catch (error) {
       console.error("Error adding property to favorites:", error);
-      res.status(500).json({ message: "Failed to add to favorites" });
+      res.status(500).json({ message: "Falha ao adicionar aos favoritos" });
     }
   });
 
@@ -204,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({ success: true });
     } catch (error) {
       console.error("Error removing property from favorites:", error);
-      res.status(500).json({ message: "Failed to remove from favorites" });
+      res.status(500).json({ message: "Falha ao remover dos favoritos" });
     }
   });
 
@@ -247,10 +247,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(property);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Erro de validação", errors: error.errors });
       }
       console.error("Error creating property:", error);
-      res.status(500).json({ message: "Failed to create property" });
+      res.status(500).json({ message: "Falha ao criar imóvel" });
     }
   });
 
@@ -260,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const property = await storage.getProperty(req.params.id);
       
       if (!property) {
-        return res.status(404).json({ message: "Property not found" });
+        return res.status(404).json({ message: "Imóvel não encontrado" });
       }
       
       if (property.agentId !== userId) {
@@ -272,10 +272,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedProperty);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Erro de validação", errors: error.errors });
       }
       console.error("Error updating property:", error);
-      res.status(500).json({ message: "Failed to update property" });
+      res.status(500).json({ message: "Falha ao atualizar imóvel" });
     }
   });
 
@@ -285,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const property = await storage.getProperty(req.params.id);
       
       if (!property) {
-        return res.status(404).json({ message: "Property not found" });
+        return res.status(404).json({ message: "Imóvel não encontrado" });
       }
       
       if (property.agentId !== userId) {
@@ -319,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(inquiry);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Erro de validação", errors: error.errors });
       }
       console.error("Error creating inquiry:", error);
       res.status(500).json({ message: "Failed to create inquiry" });
@@ -355,7 +355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const property = await storage.getProperty(req.params.id);
       
       if (!property) {
-        return res.status(404).json({ message: "Property not found" });
+        return res.status(404).json({ message: "Imóvel não encontrado" });
       }
       
       if (property.agentId !== userId) {
@@ -377,7 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const property = await storage.getProperty(req.params.id);
       
       if (!property) {
-        return res.status(404).json({ message: "Property not found" });
+        return res.status(404).json({ message: "Imóvel não encontrado" });
       }
       
       if (property.agentId !== userId) {

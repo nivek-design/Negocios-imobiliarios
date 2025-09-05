@@ -45,8 +45,8 @@ export default function FavoriteButton({ propertyId, className }: FavoriteButton
     onError: (error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Não Autorizado",
+          description: "Você foi desconectado. Fazendo login novamente...",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -79,8 +79,8 @@ export default function FavoriteButton({ propertyId, className }: FavoriteButton
     onError: (error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Não Autorizado",
+          description: "Você foi desconectado. Fazendo login novamente...",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -99,8 +99,8 @@ export default function FavoriteButton({ propertyId, className }: FavoriteButton
   const handleToggleFavorite = () => {
     if (!isAuthenticated) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to save favorites",
+        title: "Autenticação Necessária",
+        description: "Por favor, faça login para salvar favoritos",
         variant: "destructive",
       });
       setTimeout(() => {

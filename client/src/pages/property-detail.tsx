@@ -135,7 +135,7 @@ export default function PropertyDetail() {
         <Button variant="ghost" asChild className="mb-6" data-testid="button-back">
           <Link href="/properties">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Properties
+            Voltar aos Imóveis
           </Link>
         </Button>
 
