@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
 import { DashboardModal } from "@uppy/react";
-// Uppy styles are included in the component
 import AwsS3 from "@uppy/aws-s3";
 import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
@@ -43,6 +42,8 @@ export function ImageUploader({
 }: ImageUploaderProps) {
   const { t } = useI18n();
   const [showModal, setShowModal] = useState(false);
+  
+  console.log('ImageUploader render, showModal:', showModal);
   const [uppy] = useState(() =>
     new Uppy({
       restrictions: {
@@ -107,7 +108,10 @@ export function ImageUploader({
     <div>
       <Button 
         type="button"
-        onClick={() => setShowModal(true)} 
+        onClick={() => {
+          console.log('Button clicked, setting modal to true');
+          setShowModal(true);
+        }} 
         className={buttonClassName}
         disabled={disabled}
         data-testid="button-upload-images"

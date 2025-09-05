@@ -100,3 +100,31 @@
 .property-card:hover .property-image {
   transform: scale(1.05);
 }
+
+/* Uppy Dashboard Styles */
+.uppy-DashboardModal {
+  z-index: 9999 !important;
+}
+
+.uppy-Dashboard {
+  font-family: var(--font-sans);
+}
+
+.uppy-DashboardModal-content {
+  border-radius: 8px;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.uppy-Dashboard-AddFiles-title {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.uppy-Dashboard-AddFiles-info {
+  color: hsl(var(--muted-foreground));
+}
+
+.uppy-DashboardModal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
