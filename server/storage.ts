@@ -16,7 +16,7 @@ import {
   type InsertPropertyFavorite,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and, gte, lte, ilike, or, sql } from "drizzle-orm";
+import { eq, desc, asc, and, gte, lte, ilike, or, sql, inArray } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -331,13 +331,13 @@ export class DatabaseStorage implements IStorage {
     const viewsResult = await db
       .select({ count: sql`count(*)` })
       .from(propertyViews)
-      .where(sql`${propertyViews.propertyId} = ANY(${propertyIds})`);
+      .where(inArray(propertyViews.propertyId, propertyIds));
     
     // Count total favorites for agent's properties
     const favoritesResult = await db
       .select({ count: sql`count(*)` })
       .from(propertyFavorites)
-      .where(sql`${propertyFavorites.propertyId} = ANY(${propertyIds})`);
+      .where(inArray(propertyFavorites.propertyId, propertyIds));
     
     return {
       totalViews: Number(viewsResult[0]?.count || 0),
