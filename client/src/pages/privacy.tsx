@@ -31,7 +31,7 @@ export default function Privacy() {
           </CardHeader>
           <CardContent className="prose prose-gray max-w-none">
             <p>
-              A Premier Properties está comprometida em proteger sua privacidade e dados pessoais. 
+              A Kalross Negócios Imobiliários está comprometida em proteger sua privacidade e dados pessoais. 
               Esta Política de Privacidade explica como coletamos, usamos, armazenamos e protegemos 
               suas informações quando você utiliza nosso site e serviços.
             </p>

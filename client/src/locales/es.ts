@@ -152,7 +152,7 @@ export default {
   'form.deleteConfirm': '¿Estás seguro de que quieres eliminar esta propiedad?',
 
   // Footer
-  'footer.company': 'Premier Properties',
+  'footer.company': 'Kalross Inmobiliaria',
   'footer.description': 'Tu socio confiable para encontrar el hogar perfecto. Nos especializamos en bienes raíces de lujo y servicio excepcional al cliente.',
   'footer.quickLinks': 'Enlaces Rápidos',
   'footer.browseProperties': 'Explorar Propiedades',
@@ -163,7 +163,7 @@ export default {
   'footer.privacyPolicy': 'Política de Privacidad',
   'footer.termsOfService': 'Términos de Servicio',
   'footer.contactInfo': 'Información de Contacto',
-  'footer.copyright': '© 2024 Premier Properties. Todos los derechos reservados.',
+  'footer.copyright': '© 2024 Kalross Inmobiliaria. Todos los derechos reservados.',
 
   // Common
   'common.unauthorized': 'No Autorizado',

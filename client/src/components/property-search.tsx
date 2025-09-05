@@ -1,7 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +18,10 @@ interface PropertySearchProps {
   initialFilters?: any;
 }
 
-export default function PropertySearch({ onFilterChange, initialFilters = {} }: PropertySearchProps) {
+export default function PropertySearch({
+  onFilterChange,
+  initialFilters = {},
+}: PropertySearchProps) {
   const { t } = useI18n();
   const [filters, setFilters] = useState({
     propertyType: [],
@@ -51,18 +60,24 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
     return () => clearTimeout(timeoutId);
   }, [filters, onFilterChange]);
 
-  const handlePropertyTypeChange = useCallback((type: string, checked: boolean) => {
-    setFilters((prev: any) => ({
-      ...prev,
-      propertyType: checked 
-        ? [...prev.propertyType, type]
-        : prev.propertyType.filter((t: string) => t !== type)
-    }));
-  }, []);
+  const handlePropertyTypeChange = useCallback(
+    (type: string, checked: boolean) => {
+      setFilters((prev: any) => ({
+        ...prev,
+        propertyType: checked
+          ? [...prev.propertyType, type]
+          : prev.propertyType.filter((t: string) => t !== type),
+      }));
+    },
+    [],
+  );
 
-  const handleInputChange = useCallback((field: string, value: string | boolean) => {
-    setFilters((prev: any) => ({ ...prev, [field]: value }));
-  }, []);
+  const handleInputChange = useCallback(
+    (field: string, value: string | boolean) => {
+      setFilters((prev: any) => ({ ...prev, [field]: value }));
+    },
+    [],
+  );
 
   const clearFilters = () => {
     setFilters({
@@ -96,84 +111,107 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
   return (
     <Card className="sticky top-24">
       <CardHeader>
-        <CardTitle data-testid="text-search-filters">{t('search.filters')}</CardTitle>
+        <CardTitle data-testid="text-search-filters">
+          {t("search.filters")}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Keyword Search */}
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">Busca por palavras-chave</Label>
+          <Label className="text-sm font-medium text-foreground mb-2 block">
+            Busca por palavras-chave
+          </Label>
           <Input
             type="text"
             placeholder="Buscar no título e descrição..."
             value={filters.keyword}
-            onChange={(e) => handleInputChange('keyword', e.target.value)}
+            onChange={(e) => handleInputChange("keyword", e.target.value)}
             data-testid="input-keyword-search"
           />
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">{t('search.propertyType')}</Label>
+          <Label className="text-sm font-medium text-foreground mb-2 block">
+            {t("search.propertyType")}
+          </Label>
           <div className="space-y-2">
-            {['house', 'condo', 'townhouse', 'apartment'].map((type) => (
-              <div key={type} className="flex items-center space-x-2">
-                <Checkbox
-                  id={type}
-                  checked={filters.propertyType.includes(type)}
-                  onCheckedChange={(checked) => 
-                    handlePropertyTypeChange(type, checked as boolean)
-                  }
-                  data-testid={`checkbox-${type}`}
-                />
-                <Label htmlFor={type} className="text-sm text-foreground capitalize">
-                  {type}
-                </Label>
-              </div>
-            ))}
+            {["Casa", "Casa em Condomínio", "Terreno", "Apartamento"].map(
+              (type) => (
+                <div key={type} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={type}
+                    checked={filters.propertyType.includes(type)}
+                    onCheckedChange={(checked) =>
+                      handlePropertyTypeChange(type, checked as boolean)
+                    }
+                    data-testid={`checkbox-${type}`}
+                  />
+                  <Label
+                    htmlFor={type}
+                    className="text-sm text-foreground capitalize"
+                  >
+                    {type}
+                  </Label>
+                </div>
+              ),
+            )}
           </div>
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">{t('search.status')}</Label>
-          <Select value={filters.status} onValueChange={(value) => handleInputChange('status', value)}>
+          <Label className="text-sm font-medium text-foreground mb-2 block">
+            {t("search.status")}
+          </Label>
+          <Select
+            value={filters.status}
+            onValueChange={(value) => handleInputChange("status", value)}
+          >
             <SelectTrigger data-testid="select-status">
-              <SelectValue placeholder={t('search.anyStatus')} />
+              <SelectValue placeholder={t("search.anyStatus")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('search.anyStatus')}</SelectItem>
-              <SelectItem value="for_sale">{t('status.forSale')}</SelectItem>
-              <SelectItem value="for_rent">{t('status.forRent')}</SelectItem>
+              <SelectItem value="all">{t("search.anyStatus")}</SelectItem>
+              <SelectItem value="for_sale">{t("status.forSale")}</SelectItem>
+              <SelectItem value="for_rent">{t("status.forRent")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">{t('search.priceRange')}</Label>
+          <Label className="text-sm font-medium text-foreground mb-2 block">
+            {t("search.priceRange")}
+          </Label>
           <div className="flex space-x-2">
             <Input
               type="number"
-              placeholder={t('search.min')}
+              placeholder={t("search.min")}
               value={filters.minPrice}
-              onChange={(e) => handleInputChange('minPrice', e.target.value)}
+              onChange={(e) => handleInputChange("minPrice", e.target.value)}
               data-testid="input-min-price"
             />
             <Input
               type="number"
-              placeholder={t('search.max')}
+              placeholder={t("search.max")}
               value={filters.maxPrice}
-              onChange={(e) => handleInputChange('maxPrice', e.target.value)}
+              onChange={(e) => handleInputChange("maxPrice", e.target.value)}
               data-testid="input-max-price"
             />
           </div>
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">{t('search.bedrooms')}</Label>
-          <Select value={filters.bedrooms} onValueChange={(value) => handleInputChange('bedrooms', value)}>
+          <Label className="text-sm font-medium text-foreground mb-2 block">
+            {t("search.bedrooms")}
+          </Label>
+          <Select
+            value={filters.bedrooms}
+            onValueChange={(value) => handleInputChange("bedrooms", value)}
+          >
             <SelectTrigger data-testid="select-bedrooms">
-              <SelectValue placeholder={t('search.any')} />
+              <SelectValue placeholder={t("search.any")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="any">{t('search.any')}</SelectItem>
+              <SelectItem value="any">{t("search.any")}</SelectItem>
               <SelectItem value="1">1+</SelectItem>
               <SelectItem value="2">2+</SelectItem>
               <SelectItem value="3">3+</SelectItem>
@@ -183,13 +221,18 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">{t('search.bathrooms')}</Label>
-          <Select value={filters.bathrooms} onValueChange={(value) => handleInputChange('bathrooms', value)}>
+          <Label className="text-sm font-medium text-foreground mb-2 block">
+            {t("search.bathrooms")}
+          </Label>
+          <Select
+            value={filters.bathrooms}
+            onValueChange={(value) => handleInputChange("bathrooms", value)}
+          >
             <SelectTrigger data-testid="select-bathrooms">
               <SelectValue placeholder="Any" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="any">{t('search.any')}</SelectItem>
+              <SelectItem value="any">{t("search.any")}</SelectItem>
               <SelectItem value="1">1+</SelectItem>
               <SelectItem value="2">2+</SelectItem>
               <SelectItem value="3">3+</SelectItem>
@@ -199,8 +242,13 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
 
         {/* Distance Filter */}
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">Raio de Busca (km)</Label>
-          <Select value={filters.radius} onValueChange={(value) => handleInputChange('radius', value)}>
+          <Label className="text-sm font-medium text-foreground mb-2 block">
+            Raio de Busca (km)
+          </Label>
+          <Select
+            value={filters.radius}
+            onValueChange={(value) => handleInputChange("radius", value)}
+          >
             <SelectTrigger data-testid="select-radius">
               <SelectValue placeholder="Selecione o raio" />
             </SelectTrigger>
@@ -216,13 +264,17 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
 
         {/* Property Features */}
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">Características</Label>
+          <Label className="text-sm font-medium text-foreground mb-2 block">
+            Características
+          </Label>
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="hasGarage"
                 checked={filters.hasGarage}
-                onCheckedChange={(checked) => handleInputChange('hasGarage', checked as boolean)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("hasGarage", checked as boolean)
+                }
                 data-testid="checkbox-garage"
               />
               <Label htmlFor="hasGarage" className="text-sm text-foreground">
@@ -233,7 +285,9 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <Checkbox
                 id="hasPool"
                 checked={filters.hasPool}
-                onCheckedChange={(checked) => handleInputChange('hasPool', checked as boolean)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("hasPool", checked as boolean)
+                }
                 data-testid="checkbox-pool"
               />
               <Label htmlFor="hasPool" className="text-sm text-foreground">
@@ -244,7 +298,9 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <Checkbox
                 id="hasBalcony"
                 checked={filters.hasBalcony}
-                onCheckedChange={(checked) => handleInputChange('hasBalcony', checked as boolean)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("hasBalcony", checked as boolean)
+                }
                 data-testid="checkbox-balcony"
               />
               <Label htmlFor="hasBalcony" className="text-sm text-foreground">
@@ -255,7 +311,9 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <Checkbox
                 id="hasGarden"
                 checked={filters.hasGarden}
-                onCheckedChange={(checked) => handleInputChange('hasGarden', checked as boolean)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("hasGarden", checked as boolean)
+                }
                 data-testid="checkbox-garden"
               />
               <Label htmlFor="hasGarden" className="text-sm text-foreground">
@@ -266,10 +324,15 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <Checkbox
                 id="hasAirConditioning"
                 checked={filters.hasAirConditioning}
-                onCheckedChange={(checked) => handleInputChange('hasAirConditioning', checked as boolean)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("hasAirConditioning", checked as boolean)
+                }
                 data-testid="checkbox-air-conditioning"
               />
-              <Label htmlFor="hasAirConditioning" className="text-sm text-foreground">
+              <Label
+                htmlFor="hasAirConditioning"
+                className="text-sm text-foreground"
+              >
                 Ar-condicionado
               </Label>
             </div>
@@ -277,7 +340,9 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <Checkbox
                 id="hasFireplace"
                 checked={filters.hasFireplace}
-                onCheckedChange={(checked) => handleInputChange('hasFireplace', checked as boolean)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("hasFireplace", checked as boolean)
+                }
                 data-testid="checkbox-fireplace"
               />
               <Label htmlFor="hasFireplace" className="text-sm text-foreground">
@@ -288,10 +353,15 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <Checkbox
                 id="hasPetsAllowed"
                 checked={filters.hasPetsAllowed}
-                onCheckedChange={(checked) => handleInputChange('hasPetsAllowed', checked as boolean)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("hasPetsAllowed", checked as boolean)
+                }
                 data-testid="checkbox-pets-allowed"
               />
-              <Label htmlFor="hasPetsAllowed" className="text-sm text-foreground">
+              <Label
+                htmlFor="hasPetsAllowed"
+                className="text-sm text-foreground"
+              >
                 Aceita animais
               </Label>
             </div>
@@ -299,7 +369,9 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <Checkbox
                 id="furnished"
                 checked={filters.furnished}
-                onCheckedChange={(checked) => handleInputChange('furnished', checked as boolean)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("furnished", checked as boolean)
+                }
                 data-testid="checkbox-furnished"
               />
               <Label htmlFor="furnished" className="text-sm text-foreground">
@@ -310,7 +382,9 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <Checkbox
                 id="hasElevator"
                 checked={filters.hasElevator}
-                onCheckedChange={(checked) => handleInputChange('hasElevator', checked as boolean)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("hasElevator", checked as boolean)
+                }
                 data-testid="checkbox-elevator"
               />
               <Label htmlFor="hasElevator" className="text-sm text-foreground">
@@ -321,7 +395,9 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <Checkbox
                 id="hasSecurity"
                 checked={filters.hasSecurity}
-                onCheckedChange={(checked) => handleInputChange('hasSecurity', checked as boolean)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("hasSecurity", checked as boolean)
+                }
                 data-testid="checkbox-security"
               />
               <Label htmlFor="hasSecurity" className="text-sm text-foreground">
@@ -332,7 +408,9 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <Checkbox
                 id="hasGym"
                 checked={filters.hasGym}
-                onCheckedChange={(checked) => handleInputChange('hasGym', checked as boolean)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("hasGym", checked as boolean)
+                }
                 data-testid="checkbox-gym"
               />
               <Label htmlFor="hasGym" className="text-sm text-foreground">
@@ -343,10 +421,15 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <Checkbox
                 id="hasPlayground"
                 checked={filters.hasPlayground}
-                onCheckedChange={(checked) => handleInputChange('hasPlayground', checked as boolean)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("hasPlayground", checked as boolean)
+                }
                 data-testid="checkbox-playground"
               />
-              <Label htmlFor="hasPlayground" className="text-sm text-foreground">
+              <Label
+                htmlFor="hasPlayground"
+                className="text-sm text-foreground"
+              >
                 Playground
               </Label>
             </div>
@@ -355,10 +438,15 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
 
         {/* Additional Filters */}
         <div>
-          <Label className="text-sm font-medium text-foreground mb-2 block">Filtros Adicionais</Label>
+          <Label className="text-sm font-medium text-foreground mb-2 block">
+            Filtros Adicionais
+          </Label>
           <div className="space-y-2">
             <div>
-              <Label htmlFor="minGarageSpaces" className="text-xs text-muted-foreground">
+              <Label
+                htmlFor="minGarageSpaces"
+                className="text-xs text-muted-foreground"
+              >
                 Mín. Vagas de Garagem
               </Label>
               <Input
@@ -366,7 +454,9 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
                 type="number"
                 min="0"
                 value={filters.minGarageSpaces}
-                onChange={(e) => handleInputChange('minGarageSpaces', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("minGarageSpaces", e.target.value)
+                }
                 placeholder="0"
                 className="text-sm"
                 data-testid="input-min-garage-spaces"
@@ -374,7 +464,10 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label htmlFor="minYearBuilt" className="text-xs text-muted-foreground">
+                <Label
+                  htmlFor="minYearBuilt"
+                  className="text-xs text-muted-foreground"
+                >
                   Ano Mín.
                 </Label>
                 <Input
@@ -383,14 +476,19 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
                   min="1800"
                   max={new Date().getFullYear()}
                   value={filters.minYearBuilt}
-                  onChange={(e) => handleInputChange('minYearBuilt', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("minYearBuilt", e.target.value)
+                  }
                   placeholder="1990"
                   className="text-sm"
                   data-testid="input-min-year-built"
                 />
               </div>
               <div>
-                <Label htmlFor="maxYearBuilt" className="text-xs text-muted-foreground">
+                <Label
+                  htmlFor="maxYearBuilt"
+                  className="text-xs text-muted-foreground"
+                >
                   Ano Máx.
                 </Label>
                 <Input
@@ -399,7 +497,9 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
                   min="1800"
                   max={new Date().getFullYear()}
                   value={filters.maxYearBuilt}
-                  onChange={(e) => handleInputChange('maxYearBuilt', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("maxYearBuilt", e.target.value)
+                  }
                   placeholder="2024"
                   className="text-sm"
                   data-testid="input-max-year-built"
@@ -407,7 +507,10 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               </div>
             </div>
             <div>
-              <Label htmlFor="minLotArea" className="text-xs text-muted-foreground">
+              <Label
+                htmlFor="minLotArea"
+                className="text-xs text-muted-foreground"
+              >
                 Área Mín. Terreno (m²)
               </Label>
               <Input
@@ -416,7 +519,9 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
                 min="0"
                 step="0.01"
                 value={filters.minLotArea}
-                onChange={(e) => handleInputChange('minLotArea', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("minLotArea", e.target.value)
+                }
                 placeholder="100"
                 className="text-sm"
                 data-testid="input-min-lot-area"
@@ -426,13 +531,13 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
         </div>
 
         <div className="flex space-x-2">
-          <Button 
-            onClick={clearFilters} 
-            variant="outline" 
+          <Button
+            onClick={clearFilters}
+            variant="outline"
             className="flex-1"
             data-testid="button-clear-filters"
           >
-            {t('search.clear')}
+            {t("search.clear")}
           </Button>
         </div>
       </CardContent>

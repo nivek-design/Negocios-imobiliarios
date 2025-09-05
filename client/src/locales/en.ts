@@ -152,7 +152,7 @@ export default {
   'form.deleteConfirm': 'Are you sure you want to delete this property?',
 
   // Footer
-  'footer.company': 'Premier Properties',
+  'footer.company': 'Kalross Real Estate',
   'footer.description': 'Your trusted partner in finding the perfect home. We specialize in luxury real estate and exceptional customer service.',
   'footer.quickLinks': 'Quick Links',
   'footer.browseProperties': 'Browse Properties',
@@ -163,7 +163,7 @@ export default {
   'footer.privacyPolicy': 'Privacy Policy',
   'footer.termsOfService': 'Terms of Service',
   'footer.contactInfo': 'Contact Info',
-  'footer.copyright': '© 2024 Premier Properties. All rights reserved.',
+  'footer.copyright': '© 2024 Kalross Real Estate. All rights reserved.',
 
   // Common
   'common.unauthorized': 'Unauthorized',

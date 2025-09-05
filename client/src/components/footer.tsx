@@ -1,5 +1,6 @@
 import { Separator } from "@/components/ui/separator";
 import { Facebook, Instagram, Twitter, Linkedin, Phone, Mail, MapPin } from "lucide-react";
+import kalrossLogo from "@assets/Kalross-negocios-imobiliários_1757100084683.png";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -11,10 +12,14 @@ export default function Footer() {
           
           {/* Company Info */}
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-primary">Premier Properties</h3>
+            <img 
+              src={kalrossLogo} 
+              alt="Kalross Negócios Imobiliários" 
+              className="h-16 w-auto"
+            />
             <p className="text-sm text-muted-foreground">
-              Sua imobiliária de confiança há mais de 20 anos. Encontre o imóvel dos seus sonhos 
-              com nossa expertise e atendimento personalizado.
+              Conectando você ao seu novo lar. Sua imobiliária de confiança em Londrina 
+              com atendimento personalizado e soluções imobiliárias completas.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
@@ -97,17 +102,17 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center space-x-2">
                 <Phone className="w-4 h-4 text-primary" />
-                <span className="text-muted-foreground">(11) 99999-9999</span>
+                <span className="text-muted-foreground">(43) 3322-1100</span>
               </li>
               <li className="flex items-center space-x-2">
                 <Mail className="w-4 h-4 text-primary" />
-                <span className="text-muted-foreground">contato@premierproperties.com</span>
+                <span className="text-muted-foreground">contato@kalross.com.br</span>
               </li>
               <li className="flex items-start space-x-2">
                 <MapPin className="w-4 h-4 text-primary mt-0.5" />
                 <span className="text-muted-foreground">
-                  Av. Paulista, 1000<br />
-                  São Paulo, SP - 01310-100
+                  Rua das Acácias, 123<br />
+                  Londrina, PR - 86010-000
                 </span>
               </li>
             </ul>
@@ -119,7 +124,7 @@ export default function Footer() {
         {/* Bottom Section */}
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="text-sm text-muted-foreground">
-            © {currentYear} Premier Properties. Todos os direitos reservados.
+            © {currentYear} Kalross Negócios Imobiliários. Todos os direitos reservados.
           </div>
           <div className="flex items-center space-x-4 text-sm text-muted-foreground">
             <span>CRECI: 12345-J</span>

@@ -31,13 +31,13 @@ export default function Terms() {
           </CardHeader>
           <CardContent className="prose prose-gray max-w-none">
             <p>
-              Bem-vindo à Premier Properties. Estes Termos de Serviço ("Termos") regem 
+              Bem-vindo à Kalross Negócios Imobiliários. Estes Termos de Serviço ("Termos") regem 
               o uso de nosso site, aplicativos móveis e serviços (coletivamente, "Serviços"). 
               Ao acessar ou usar nossos Serviços, você concorda em ficar vinculado a estes Termos.
             </p>
             <p>
               Se você não concordar com qualquer parte destes Termos, não use nossos Serviços. 
-              Estes Termos constituem um acordo legal entre você e a Premier Properties.
+              Estes Termos constituem um acordo legal entre você e a Kalross Negócios Imobiliários.
             </p>
           </CardContent>
         </Card>
@@ -53,7 +53,7 @@ export default function Terms() {
           <CardContent>
             <div className="space-y-4">
               <p className="text-muted-foreground">
-                A Premier Properties é uma plataforma online que conecta compradores, 
+                A Kalross Negócios Imobiliários é uma plataforma online que conecta compradores, 
                 vendedores, locadores e locatários de imóveis. Nossos serviços incluem:
               </p>
               
@@ -189,7 +189,7 @@ export default function Terms() {
                 <p className="text-muted-foreground">
                   Todos os direitos de propriedade intelectual nos Serviços, incluindo 
                   design, tecnologia, logos, marcas registradas e conteúdo, pertencem 
-                  à Premier Properties ou nossos licenciadores.
+                  à Kalross Negócios Imobiliários ou nossos licenciadores.
                 </p>
               </div>
               
@@ -263,7 +263,7 @@ export default function Terms() {
               <div>
                 <h3 className="text-lg font-semibold mb-2">Limitação de Responsabilidade</h3>
                 <p className="text-muted-foreground">
-                  A Premier Properties não será responsável por danos indiretos, 
+                  A Kalross Negócios Imobiliários não será responsável por danos indiretos, 
                   incidentais, especiais ou consequenciais decorrentes do uso de 
                   nossos Serviços, incluindo perda de lucros ou dados.
                 </p>

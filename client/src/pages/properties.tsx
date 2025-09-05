@@ -106,7 +106,7 @@ export default function Properties() {
       <section className="py-6 bg-primary text-primary-foreground">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold mb-4">Encontre o Imóvel Perfeito</h2>
+            <h2 className="text-3xl font-bold mb-4">Conectando você ao seu novo lar.</h2>
             <p className="text-lg opacity-90 mb-6">Use nossa busca avançada para encontrar a propriedade dos seus sonhos</p>
           </div>
           <div className="flex gap-2">
