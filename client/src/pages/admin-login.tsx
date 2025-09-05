@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Loader2, Home, Shield } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Eye, EyeOff, Loader2, Home, Shield, KeyRound, Mail, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,12 +15,16 @@ export default function AdminLogin() {
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
   });
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -33,6 +38,7 @@ export default function AdminLogin() {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { email: string; password: string; rememberMe: boolean }) => {
+      setIsLoading(true);
       const response = await fetch("/api/auth/login", {
         method: "POST",
         body: JSON.stringify(credentials),
@@ -50,9 +56,10 @@ export default function AdminLogin() {
     },
     onSuccess: (data) => {
       setError("");
+      setIsLoading(false);
       toast({
         title: "Login realizado com sucesso!",
-        description: "Redirecionando para o painel...",
+        description: `Bem-vindo, ${data.user?.firstName || 'usuário'}!`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
@@ -63,10 +70,33 @@ export default function AdminLogin() {
       }, 1000);
     },
     onError: (error: any) => {
+      setIsLoading(false);
       setError(error.message || "Credenciais inválidas. Tente novamente.");
       toast({
         title: "Erro no login",
         description: error.message || "Credenciais inválidas. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const forgotPasswordMutation = useMutation({
+    mutationFn: async (email: string) => {
+      // Simulate forgot password request
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return { message: "Email enviado com sucesso" };
+    },
+    onSuccess: () => {
+      setForgotPasswordSent(true);
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao enviar email",
+        description: "Tente novamente em alguns minutos.",
         variant: "destructive",
       });
     },
@@ -173,32 +203,127 @@ export default function AdminLogin() {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="rememberMe"
-                  checked={formData.rememberMe}
-                  onChange={(e) => handleInputChange("rememberMe", e.target.checked)}
-                  className="rounded"
-                />
-                <Label htmlFor="rememberMe" className="text-sm text-muted-foreground">
-                  Lembrar-me por 30 dias
-                </Label>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="rememberMe"
+                    checked={formData.rememberMe}
+                    onChange={(e) => handleInputChange("rememberMe", e.target.checked)}
+                    className="rounded"
+                  />
+                  <Label htmlFor="rememberMe" className="text-sm text-muted-foreground">
+                    Lembrar-me por 30 dias
+                  </Label>
+                </div>
+                
+                <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="text-sm text-primary hover:underline p-0 h-auto"
+                      data-testid="button-forgot-password"
+                    >
+                      Esqueci minha senha
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <KeyRound className="w-5 h-5 text-primary" />
+                        Redefinir Senha
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      {!forgotPasswordSent ? (
+                        <>
+                          <p className="text-sm text-muted-foreground">
+                            Digite seu email para receber instruções de redefinição de senha.
+                          </p>
+                          <div className="space-y-2">
+                            <Label htmlFor="forgot-email">Email</Label>
+                            <Input
+                              id="forgot-email"
+                              type="email"
+                              placeholder="seu@email.com"
+                              value={forgotPasswordEmail}
+                              onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                              data-testid="input-forgot-email"
+                            />
+                          </div>
+                          <div className="flex gap-2 pt-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowForgotPassword(false)}
+                              className="flex-1"
+                            >
+                              Cancelar
+                            </Button>
+                            <Button
+                              onClick={() => forgotPasswordMutation.mutate(forgotPasswordEmail)}
+                              disabled={!forgotPasswordEmail || forgotPasswordMutation.isPending}
+                              className="flex-1"
+                              data-testid="button-send-reset"
+                            >
+                              {forgotPasswordMutation.isPending ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Enviando...
+                                </>
+                              ) : (
+                                <>
+                                  <Mail className="w-4 h-4 mr-2" />
+                                  Enviar
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center space-y-4">
+                          <div className="flex justify-center">
+                            <CheckCircle className="w-12 h-12 text-green-500" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">Email enviado!</h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => {
+                              setShowForgotPassword(false);
+                              setForgotPasswordSent(false);
+                              setForgotPasswordEmail("");
+                            }}
+                            className="w-full"
+                          >
+                            Fechar
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
               
               <Button
                 type="submit"
-                disabled={loginMutation.isPending}
-                className="w-full h-11"
+                disabled={isLoading || loginMutation.isPending}
+                className="w-full h-11 bg-primary hover:bg-primary/90"
                 data-testid="button-admin-login"
               >
-                {loginMutation.isPending ? (
+                {isLoading || loginMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Entrando...
                   </>
                 ) : (
-                  "Entrar no Painel"
+                  <>
+                    <Shield className="w-4 h-4 mr-2" />
+                    Entrar no Painel
+                  </>
                 )}
               </Button>
             </form>

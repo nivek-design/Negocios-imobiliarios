@@ -34,9 +34,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     );
   };
 
-  // Enhanced authentication middleware
+  // Enhanced authentication middleware with JWT priority
   const customIsAuthenticated = (req: any, res: any, next: any) => {
-    // Check JWT token first
+    // Check JWT token first (highest priority)
     const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.authToken;
     
     if (token) {
@@ -44,28 +44,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const decoded = jwt.verify(token, JWT_SECRET) as any;
         req.user = { 
           ...decoded,
-          claims: { sub: decoded.id } // For compatibility with existing code
+          claims: { sub: decoded.id }, // For compatibility with existing code
+          role: decoded.role // Ensure role is accessible
         };
         return next();
       } catch (error) {
-        // Token invalid, continue to other auth methods
+        // Token invalid, clear cookie and continue to other auth methods
+        res.clearCookie('authToken');
       }
     }
     
-    // Check custom session
+    // Check custom session (second priority)
     if (req.session?.user) {
       req.user = {
         ...req.session.user,
-        claims: { sub: req.session.user.id }
+        claims: { sub: req.session.user.id },
+        role: req.session.user.role
       };
       return next();
     }
     
-    // Fallback to Replit auth
+    // Fallback to Replit auth (lowest priority)
     return isAuthenticated(req, res, next);
   };
 
-  // Route protection middleware
+  // Role-based access control middlewares
+  const requireAuth = customIsAuthenticated;
+
+  const requireAgent = (req: any, res: any, next: any) => {
+    customIsAuthenticated(req, res, () => {
+      const userRole = req.user?.role || req.session?.user?.role;
+      if (!userRole || (userRole !== 'agent' && userRole !== 'admin')) {
+        return res.status(403).json({ message: "Acesso negado. Apenas corretores e administradores." });
+      }
+      next();
+    });
+  };
+
   const requireAdmin = (req: any, res: any, next: any) => {
     customIsAuthenticated(req, res, () => {
       const userRole = req.user?.role || req.session?.user?.role;
@@ -74,6 +89,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       next();
     });
+  };
+
+  // Property ownership check middleware
+  const requirePropertyOwnership = async (req: any, res: any, next: any) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id;
+      const userRole = req.user?.role || req.session?.user?.role;
+      const property = await storage.getProperty(req.params.id);
+      
+      if (!property) {
+        return res.status(404).json({ message: "Imóvel não encontrado" });
+      }
+      
+      // Admin can access any property
+      if (userRole === 'admin') {
+        req.property = property;
+        return next();
+      }
+      
+      // Agent can only access their own properties
+      if (property.agentId !== userId) {
+        return res.status(403).json({ message: "Acesso negado. Você só pode gerenciar seus próprios imóveis." });
+      }
+      
+      req.property = property;
+      next();
+    } catch (error) {
+      console.error("Error checking property ownership:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
   };
 
   // Object storage service routes
@@ -436,9 +481,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/properties", isAuthenticated, async (req: any, res) => {
+  app.post("/api/properties", requireAgent, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || req.user?.id;
       const propertyData = insertPropertySchema.parse({
         ...req.body,
         agentId: userId,
@@ -455,19 +500,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/properties/:id", isAuthenticated, async (req: any, res) => {
+  app.put("/api/properties/:id", requireAgent, requirePropertyOwnership, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const property = await storage.getProperty(req.params.id);
-      
-      if (!property) {
-        return res.status(404).json({ message: "Imóvel não encontrado" });
-      }
-      
-      if (property.agentId !== userId) {
-        return res.status(403).json({ message: "Not authorized to update this property" });
-      }
-      
       const updateData = insertPropertySchema.partial().parse(req.body);
       const updatedProperty = await storage.updateProperty(req.params.id, updateData);
       res.json(updatedProperty);
@@ -480,24 +514,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/properties/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/properties/:id", requireAgent, requirePropertyOwnership, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const property = await storage.getProperty(req.params.id);
-      
-      if (!property) {
-        return res.status(404).json({ message: "Imóvel não encontrado" });
-      }
-      
-      if (property.agentId !== userId) {
-        return res.status(403).json({ message: "Not authorized to delete this property" });
-      }
-      
       await storage.deleteProperty(req.params.id);
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting property:", error);
-      res.status(500).json({ message: "Failed to delete property" });
+      res.status(500).json({ message: "Falha ao excluir imóvel" });
     }
   });
 
