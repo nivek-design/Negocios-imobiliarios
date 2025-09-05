@@ -265,9 +265,26 @@ export default function PropertyDetail() {
         {/* Map and Location Section */}
         {property?.latitude && property?.longitude && (
           <div className="mt-12 space-y-8">
-            <h2 className="text-2xl font-bold text-foreground mb-6">Localização e Mapa</h2>
+            <div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Localização e Mapa</h2>
+              <p className="text-muted-foreground mb-6">
+                Veja a localização exata da propriedade e explore a vizinhança
+              </p>
+            </div>
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div>
+              {/* Map */}
+              <div className="space-y-4">
+                <div className="bg-card rounded-lg p-4 border border-border">
+                  <h3 className="font-semibold text-foreground mb-2 flex items-center">
+                    <MapPin className="w-4 h-4 mr-2 text-primary" />
+                    Endereço
+                  </h3>
+                  <p className="text-muted-foreground">
+                    {property.address}, {property.city}, {property.state} {property.zipCode}
+                  </p>
+                </div>
+                
                 <Map
                   properties={[property]}
                   center={{
@@ -276,10 +293,11 @@ export default function PropertyDetail() {
                   }}
                   zoom={15}
                   height="400px"
-                  className="shadow-lg"
+                  className="shadow-lg rounded-lg overflow-hidden"
                 />
               </div>
               
+              {/* Neighborhood Info */}
               <div>
                 <NeighborhoodInfo
                   latitude={parseFloat(property.latitude)}
