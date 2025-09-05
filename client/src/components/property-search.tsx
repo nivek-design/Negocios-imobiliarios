@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,21 +33,26 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
   });
 
   useEffect(() => {
-    onFilterChange(filters);
+    // Debounce the filter changes to avoid too many API calls
+    const timeoutId = setTimeout(() => {
+      onFilterChange(filters);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
   }, [filters, onFilterChange]);
 
-  const handlePropertyTypeChange = (type: string, checked: boolean) => {
+  const handlePropertyTypeChange = useCallback((type: string, checked: boolean) => {
     setFilters((prev: any) => ({
       ...prev,
       propertyType: checked 
         ? [...prev.propertyType, type]
         : prev.propertyType.filter((t: string) => t !== type)
     }));
-  };
+  }, []);
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = useCallback((field: string, value: string | boolean) => {
     setFilters((prev: any) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
   const clearFilters = () => {
     setFilters({

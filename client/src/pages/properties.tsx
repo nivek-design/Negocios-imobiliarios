@@ -39,11 +39,16 @@ export default function Properties() {
     const params = new URLSearchParams();
     
     Object.entries(filters).forEach(([key, value]) => {
-      if (value && value !== "" && (!Array.isArray(value) || value.length > 0)) {
+      if (value !== undefined && value !== null && value !== "") {
         if (Array.isArray(value) && value.length > 0) {
           value.forEach(v => params.append(key, v));
         } else if (!Array.isArray(value)) {
-          params.set(key, value as string);
+          // Handle boolean values properly
+          if (typeof value === 'boolean') {
+            params.set(key, value.toString());
+          } else {
+            params.set(key, value as string);
+          }
         }
       }
     });
@@ -93,7 +98,10 @@ export default function Properties() {
               type="text"
               placeholder="Digite uma cidade, bairro ou endereço..."
               value={filters.search || ""}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              onChange={(e) => {
+                const newFilters = { ...filters, search: e.target.value };
+                setFilters(newFilters);
+              }}
               className="flex-1 h-12 text-lg bg-white text-black"
               data-testid="input-location-search"
             />

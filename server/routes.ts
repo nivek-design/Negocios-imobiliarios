@@ -91,6 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const filters = {
         search: req.query.search as string,
+        keyword: req.query.keyword as string,
         propertyType: req.query.propertyType as string,
         status: req.query.status as string,
         city: req.query.city as string,
@@ -98,6 +99,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxPrice: req.query.maxPrice ? parseInt(req.query.maxPrice as string) : undefined,
         bedrooms: req.query.bedrooms ? parseInt(req.query.bedrooms as string) : undefined,
         bathrooms: req.query.bathrooms ? parseInt(req.query.bathrooms as string) : undefined,
+        // Property features
+        hasGarage: req.query.hasGarage === 'true' ? true : req.query.hasGarage === 'false' ? false : undefined,
+        hasPool: req.query.hasPool === 'true' ? true : req.query.hasPool === 'false' ? false : undefined,
+        hasBalcony: req.query.hasBalcony === 'true' ? true : req.query.hasBalcony === 'false' ? false : undefined,
+        hasGarden: req.query.hasGarden === 'true' ? true : req.query.hasGarden === 'false' ? false : undefined,
+        hasAirConditioning: req.query.hasAirConditioning === 'true' ? true : req.query.hasAirConditioning === 'false' ? false : undefined,
+        hasFireplace: req.query.hasFireplace === 'true' ? true : req.query.hasFireplace === 'false' ? false : undefined,
+        hasPetsAllowed: req.query.hasPetsAllowed === 'true' ? true : req.query.hasPetsAllowed === 'false' ? false : undefined,
         sortBy: req.query.sortBy as string,
         limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
         offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
