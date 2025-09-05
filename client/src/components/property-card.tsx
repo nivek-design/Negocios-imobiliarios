@@ -75,7 +75,7 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
           <MapPin className="w-4 h-4 mr-2" />
           {property.city}, {property.state}
         </p>
-        <div className="flex justify-between text-sm text-muted-foreground mb-4">
+        <div className="grid grid-cols-3 gap-2 text-sm text-muted-foreground mb-4">
           <span className="flex items-center" data-testid={`text-bedrooms-${property.id}`}>
             <Bed className="w-4 h-4 mr-1" /> {property.bedrooms} {t('property.beds')}
           </span>
@@ -83,8 +83,23 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
             <Bath className="w-4 h-4 mr-1" /> {property.bathrooms} {t('property.baths')}
           </span>
           <span className="flex items-center" data-testid={`text-sqft-${property.id}`}>
-            <Square className="w-4 h-4 mr-1" /> {property.squareFeet} {t('property.sqft')}
+            <Square className="w-4 h-4 mr-1" /> {property.squareFeet} m²
           </span>
+          {property.garageSpaces && property.garageSpaces > 0 && (
+            <span className="flex items-center" data-testid={`text-garage-${property.id}`}>
+              🚗 {property.garageSpaces} vagas
+            </span>
+          )}
+          {property.yearBuilt && (
+            <span className="flex items-center" data-testid={`text-year-${property.id}`}>
+              📅 {property.yearBuilt}
+            </span>
+          )}
+          {property.lotArea && (
+            <span className="flex items-center" data-testid={`text-lot-area-${property.id}`}>
+              🏞️ {property.lotArea} m² terreno
+            </span>
+          )}
         </div>
         <Button asChild className="w-full" data-testid={`button-view-details-${property.id}`}>
           <Link href={`/property/${property.id}`}>

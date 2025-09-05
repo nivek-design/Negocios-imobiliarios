@@ -42,8 +42,6 @@ export function ImageUploader({
 }: ImageUploaderProps) {
   const { t } = useI18n();
   const [showModal, setShowModal] = useState(false);
-  
-  console.log('ImageUploader render, showModal:', showModal);
   const [uppy] = useState(() =>
     new Uppy({
       restrictions: {
@@ -108,10 +106,7 @@ export function ImageUploader({
     <div>
       <Button 
         type="button"
-        onClick={() => {
-          console.log('Button clicked, setting modal to true');
-          setShowModal(true);
-        }} 
+        onClick={() => setShowModal(true)} 
         className={buttonClassName}
         disabled={disabled}
         data-testid="button-upload-images"

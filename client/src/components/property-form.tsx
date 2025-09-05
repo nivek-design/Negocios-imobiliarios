@@ -115,7 +115,7 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
             <Label htmlFor="description">{t('form.description')}</Label>
             <Textarea
               id="description"
-              value={formData.description}
+              value={formData.description || ''}
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Linda casa familiar moderna..."
               rows={4}
@@ -295,10 +295,106 @@ export default function PropertyForm({ property, onSubmit, isLoading }: Property
             </div>
           </div>
 
+          {/* Additional Property Details */}
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">Detalhes Adicionais</Label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="garageSpaces">Vagas de Garagem</Label>
+                <Input
+                  id="garageSpaces"
+                  type="number"
+                  min="0"
+                  value={formData.garageSpaces || 0}
+                  onChange={(e) => handleInputChange('garageSpaces', parseInt(e.target.value) || 0)}
+                  data-testid="input-garage-spaces"
+                />
+              </div>
+              <div>
+                <Label htmlFor="yearBuilt">Ano de Construção</Label>
+                <Input
+                  id="yearBuilt"
+                  type="number"
+                  min="1800"
+                  max={new Date().getFullYear()}
+                  value={formData.yearBuilt?.toString() || ''}
+                  onChange={(e) => handleInputChange('yearBuilt', parseInt(e.target.value) || null)}
+                  placeholder="2020"
+                  data-testid="input-year-built"
+                />
+              </div>
+              <div>
+                <Label htmlFor="lotArea">Área do Terreno (m²)</Label>
+                <Input
+                  id="lotArea"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.lotArea || ''}
+                  onChange={(e) => handleInputChange('lotArea', parseFloat(e.target.value) || null)}
+                  placeholder="300.00"
+                  data-testid="input-lot-area"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Property Features */}
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">Características Adicionais</Label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="furnished"
+                  checked={formData.furnished || false}
+                  onCheckedChange={(checked) => handleInputChange('furnished', checked)}
+                  data-testid="checkbox-furnished"
+                />
+                <Label htmlFor="furnished">Mobiliado</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hasElevator"
+                  checked={formData.hasElevator || false}
+                  onCheckedChange={(checked) => handleInputChange('hasElevator', checked)}
+                  data-testid="checkbox-elevator"
+                />
+                <Label htmlFor="hasElevator">Elevador</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hasSecurity"
+                  checked={formData.hasSecurity || false}
+                  onCheckedChange={(checked) => handleInputChange('hasSecurity', checked)}
+                  data-testid="checkbox-security"
+                />
+                <Label htmlFor="hasSecurity">Segurança 24h</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hasGym"
+                  checked={formData.hasGym || false}
+                  onCheckedChange={(checked) => handleInputChange('hasGym', checked)}
+                  data-testid="checkbox-gym"
+                />
+                <Label htmlFor="hasGym">Academia</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hasPlayground"
+                  checked={formData.hasPlayground || false}
+                  onCheckedChange={(checked) => handleInputChange('hasPlayground', checked)}
+                  data-testid="checkbox-playground"
+                />
+                <Label htmlFor="hasPlayground">Playground</Label>
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center space-x-2">
             <Checkbox
               id="featured"
-              checked={formData.featured}
+              checked={formData.featured || false}
               onCheckedChange={(checked) => handleInputChange('featured', checked)}
               data-testid="checkbox-featured"
             />

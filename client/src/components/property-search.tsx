@@ -23,6 +23,10 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
     bathrooms: "",
     status: "",
     radius: "",
+    minGarageSpaces: "",
+    minYearBuilt: "",
+    maxYearBuilt: "",
+    minLotArea: "",
     hasGarage: false,
     hasPool: false,
     hasBalcony: false,
@@ -30,6 +34,11 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
     hasAirConditioning: false,
     hasFireplace: false,
     hasPetsAllowed: false,
+    furnished: false,
+    hasElevator: false,
+    hasSecurity: false,
+    hasGym: false,
+    hasPlayground: false,
     ...initialFilters,
   });
 
@@ -276,6 +285,133 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <Label htmlFor="hasPetsAllowed" className="text-sm text-foreground">
                 Aceita animais
               </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="furnished"
+                checked={filters.furnished}
+                onCheckedChange={(checked) => handleInputChange('furnished', checked as boolean)}
+                data-testid="checkbox-furnished"
+              />
+              <Label htmlFor="furnished" className="text-sm text-foreground">
+                Mobiliado
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hasElevator"
+                checked={filters.hasElevator}
+                onCheckedChange={(checked) => handleInputChange('hasElevator', checked as boolean)}
+                data-testid="checkbox-elevator"
+              />
+              <Label htmlFor="hasElevator" className="text-sm text-foreground">
+                Elevador
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hasSecurity"
+                checked={filters.hasSecurity}
+                onCheckedChange={(checked) => handleInputChange('hasSecurity', checked as boolean)}
+                data-testid="checkbox-security"
+              />
+              <Label htmlFor="hasSecurity" className="text-sm text-foreground">
+                Segurança 24h
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hasGym"
+                checked={filters.hasGym}
+                onCheckedChange={(checked) => handleInputChange('hasGym', checked as boolean)}
+                data-testid="checkbox-gym"
+              />
+              <Label htmlFor="hasGym" className="text-sm text-foreground">
+                Academia
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hasPlayground"
+                checked={filters.hasPlayground}
+                onCheckedChange={(checked) => handleInputChange('hasPlayground', checked as boolean)}
+                data-testid="checkbox-playground"
+              />
+              <Label htmlFor="hasPlayground" className="text-sm text-foreground">
+                Playground
+              </Label>
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Filters */}
+        <div>
+          <Label className="text-sm font-medium text-foreground mb-2 block">Filtros Adicionais</Label>
+          <div className="space-y-2">
+            <div>
+              <Label htmlFor="minGarageSpaces" className="text-xs text-muted-foreground">
+                Mín. Vagas de Garagem
+              </Label>
+              <Input
+                id="minGarageSpaces"
+                type="number"
+                min="0"
+                value={filters.minGarageSpaces}
+                onChange={(e) => handleInputChange('minGarageSpaces', e.target.value)}
+                placeholder="0"
+                className="text-sm"
+                data-testid="input-min-garage-spaces"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="minYearBuilt" className="text-xs text-muted-foreground">
+                  Ano Mín.
+                </Label>
+                <Input
+                  id="minYearBuilt"
+                  type="number"
+                  min="1800"
+                  max={new Date().getFullYear()}
+                  value={filters.minYearBuilt}
+                  onChange={(e) => handleInputChange('minYearBuilt', e.target.value)}
+                  placeholder="1990"
+                  className="text-sm"
+                  data-testid="input-min-year-built"
+                />
+              </div>
+              <div>
+                <Label htmlFor="maxYearBuilt" className="text-xs text-muted-foreground">
+                  Ano Máx.
+                </Label>
+                <Input
+                  id="maxYearBuilt"
+                  type="number"
+                  min="1800"
+                  max={new Date().getFullYear()}
+                  value={filters.maxYearBuilt}
+                  onChange={(e) => handleInputChange('maxYearBuilt', e.target.value)}
+                  placeholder="2024"
+                  className="text-sm"
+                  data-testid="input-max-year-built"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="minLotArea" className="text-xs text-muted-foreground">
+                Área Mín. Terreno (m²)
+              </Label>
+              <Input
+                id="minLotArea"
+                type="number"
+                min="0"
+                step="0.01"
+                value={filters.minLotArea}
+                onChange={(e) => handleInputChange('minLotArea', e.target.value)}
+                placeholder="100"
+                className="text-sm"
+                data-testid="input-min-lot-area"
+              />
             </div>
           </div>
         </div>
