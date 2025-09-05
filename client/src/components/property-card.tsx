@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, Bed, Bath, Square, MapPin } from "lucide-react";
 import { Link } from "wouter";
 import { useI18n } from "@/contexts/I18nContext";
+import { getPropertyMainImage, handleImageError } from "@/lib/imageUtils";
 import type { Property } from "@shared/schema";
 
 interface PropertyCardProps {
@@ -35,7 +36,7 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
     }
   };
 
-  const mainImage = property.images?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600';
+  const mainImage = getPropertyMainImage(property.images);
 
   return (
     <div className={`property-card bg-card rounded-lg shadow-lg overflow-hidden border border-border ${className}`}>
@@ -43,6 +44,7 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
         <img 
           src={mainImage} 
           alt={property.title}
+          onError={handleImageError}
           className="property-image w-full h-full object-cover"
           data-testid={`img-property-${property.id}`}
         />

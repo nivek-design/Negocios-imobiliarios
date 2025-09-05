@@ -86,6 +86,23 @@ export const inquiries = pgTable("inquiries", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const propertyViews = pgTable("property_views", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  propertyId: varchar("property_id").notNull().references(() => properties.id),
+  userId: varchar("user_id").references(() => users.id),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const propertyFavorites = pgTable("property_favorites", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  propertyId: varchar("property_id").notNull().references(() => properties.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("property_favorites_property_user_idx").on(table.propertyId, table.userId),
+]);
+
 // Relations
 export const propertiesRelations = relations(properties, ({ one, many }) => ({
   agent: one(users, {
@@ -93,16 +110,42 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
     references: [users.id],
   }),
   inquiries: many(inquiries),
+  views: many(propertyViews),
+  favorites: many(propertyFavorites),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
   properties: many(properties),
+  propertyViews: many(propertyViews),
+  propertyFavorites: many(propertyFavorites),
 }));
 
 export const inquiriesRelations = relations(inquiries, ({ one }) => ({
   property: one(properties, {
     fields: [inquiries.propertyId],
     references: [properties.id],
+  }),
+}));
+
+export const propertyViewsRelations = relations(propertyViews, ({ one }) => ({
+  property: one(properties, {
+    fields: [propertyViews.propertyId],
+    references: [properties.id],
+  }),
+  user: one(users, {
+    fields: [propertyViews.userId],
+    references: [users.id],
+  }),
+}));
+
+export const propertyFavoritesRelations = relations(propertyFavorites, ({ one }) => ({
+  property: one(properties, {
+    fields: [propertyFavorites.propertyId],
+    references: [properties.id],
+  }),
+  user: one(users, {
+    fields: [propertyFavorites.userId],
+    references: [users.id],
   }),
 }));
 
@@ -114,6 +157,16 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
 });
 
 export const insertInquirySchema = createInsertSchema(inquiries).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPropertyViewSchema = createInsertSchema(propertyViews).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPropertyFavoriteSchema = createInsertSchema(propertyFavorites).omit({
   id: true,
   createdAt: true,
 });
@@ -133,3 +186,7 @@ export type Property = typeof properties.$inferSelect;
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
 export type Inquiry = typeof inquiries.$inferSelect;
 export type InsertInquiry = z.infer<typeof insertInquirySchema>;
+export type PropertyView = typeof propertyViews.$inferSelect;
+export type InsertPropertyView = z.infer<typeof insertPropertyViewSchema>;
+export type PropertyFavorite = typeof propertyFavorites.$inferSelect;
+export type InsertPropertyFavorite = z.infer<typeof insertPropertyFavoriteSchema>;

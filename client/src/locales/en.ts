@@ -50,9 +50,23 @@ export default {
   'search.propertiesFound': 'properties found',
   'search.sortBy': 'Sort by',
   'search.newest': 'Newest',
+  'search.oldest': 'Oldest',
+  'search.sizeLargest': 'Largest Area',
+  'search.sizeSmallest': 'Smallest Area',
+  'search.bedroomsHigh': 'Most Bedrooms',
+  'search.bedroomsLow': 'Fewest Bedrooms',
   'search.priceLowHigh': 'Price (Low to High)',
   'search.priceHighLow': 'Price (High to Low)',
   'search.sqft': 'Square Feet',
+
+  // Favorites
+  'property.addToFavorites': 'Add to Favorites',
+  'property.removeFavorite': 'Remove from Favorites',
+  'property.addedToFavorites': 'Added to favorites!',
+  'property.removedFromFavorites': 'Removed from favorites!',
+  'property.failedToAddToFavorites': 'Failed to add to favorites',
+  'property.failedToRemoveFromFavorites': 'Failed to remove from favorites',
+  'property.myFavorites': 'My Favorites',
 
   // Property Card
   'property.beds': 'beds',

@@ -51,6 +51,12 @@ export default function AgentDashboard() {
     retry: false,
   });
 
+  const { data: metrics = { totalViews: 0, totalFavorites: 0 } } = useQuery<{ totalViews: number; totalFavorites: number }>({
+    queryKey: ["/api/agent/metrics"],
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
   const createPropertyMutation = useMutation({
     mutationFn: async (data: InsertProperty) => {
       await apiRequest("POST", "/api/properties", data);
@@ -188,8 +194,6 @@ export default function AgentDashboard() {
 
   // Calculate statistics
   const activeListings = properties.filter(p => ['for_sale', 'for_rent'].includes(p.status)).length;
-  const totalViews = properties.reduce((sum, p) => sum + (Math.floor(Math.random() * 100) + 50), 0); // Mock data
-  const totalFavorites = properties.reduce((sum, p) => sum + (Math.floor(Math.random() * 20) + 5), 0); // Mock data
 
   return (
     <div className="min-h-screen bg-background">
@@ -245,7 +249,7 @@ export default function AgentDashboard() {
                 <div>
                   <p className="text-muted-foreground text-sm">Total Views</p>
                   <p className="text-3xl font-bold text-foreground" data-testid="text-total-views">
-                    {totalViews}
+                    {metrics.totalViews}
                   </p>
                 </div>
                 <div className="bg-accent/10 p-3 rounded-full">
@@ -261,7 +265,7 @@ export default function AgentDashboard() {
                 <div>
                   <p className="text-muted-foreground text-sm">Favorites</p>
                   <p className="text-3xl font-bold text-foreground" data-testid="text-total-favorites">
-                    {totalFavorites}
+                    {metrics.totalFavorites}
                   </p>
                 </div>
                 <div className="bg-muted-foreground/10 p-3 rounded-full">

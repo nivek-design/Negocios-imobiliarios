@@ -50,9 +50,23 @@ export default {
   'search.propertiesFound': 'imóveis encontrados',
   'search.sortBy': 'Ordenar por',
   'search.newest': 'Mais Recentes',
+  'search.oldest': 'Mais Antigos',
+  'search.sizeLargest': 'Área: Maior',
+  'search.sizeSmallest': 'Área: Menor',
+  'search.bedroomsHigh': 'Mais Quartos',
+  'search.bedroomsLow': 'Menos Quartos',
   'search.priceLowHigh': 'Preço (Menor para Maior)',
   'search.priceHighLow': 'Preço (Maior para Menor)',
   'search.sqft': 'Área (m²)',
+
+  // Favorites
+  'property.addToFavorites': 'Adicionar aos Favoritos',
+  'property.removeFavorite': 'Remover dos Favoritos',
+  'property.addedToFavorites': 'Adicionado aos favoritos!',
+  'property.removedFromFavorites': 'Removido dos favoritos!',
+  'property.failedToAddToFavorites': 'Erro ao adicionar aos favoritos',
+  'property.failedToRemoveFromFavorites': 'Erro ao remover dos favoritos',
+  'property.myFavorites': 'Meus Favoritos',
 
   // Property Card
   'property.beds': 'quartos',

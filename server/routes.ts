@@ -98,6 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxPrice: req.query.maxPrice ? parseInt(req.query.maxPrice as string) : undefined,
         bedrooms: req.query.bedrooms ? parseInt(req.query.bedrooms as string) : undefined,
         bathrooms: req.query.bathrooms ? parseInt(req.query.bathrooms as string) : undefined,
+        sortBy: req.query.sortBy as string,
         limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
         offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
       };
@@ -130,6 +131,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching property:", error);
       res.status(500).json({ message: "Failed to fetch property" });
+    }
+  });
+
+  // Record property view
+  app.post("/api/properties/:id/view", async (req: any, res) => {
+    try {
+      const propertyId = req.params.id;
+      const userId = req.user?.claims?.sub || null;
+      const ipAddress = req.ip || req.connection.remoteAddress || null;
+      
+      await storage.createPropertyView({
+        propertyId,
+        userId,
+        ipAddress
+      });
+      
+      res.status(201).json({ message: "View recorded" });
+    } catch (error) {
+      console.error("Error recording property view:", error);
+      res.status(500).json({ message: "Failed to record view" });
+    }
+  });
+
+  // Add property to favorites
+  app.post("/api/properties/:id/favorite", isAuthenticated, async (req: any, res) => {
+    try {
+      const propertyId = req.params.id;
+      const userId = req.user.claims.sub;
+      
+      await storage.createPropertyFavorite({
+        propertyId,
+        userId,
+        createdAt: new Date(),
+      });
+      
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error adding property to favorites:", error);
+      res.status(500).json({ message: "Failed to add to favorites" });
+    }
+  });
+
+  // Remove property from favorites
+  app.delete("/api/properties/:id/favorite", isAuthenticated, async (req: any, res) => {
+    try {
+      const propertyId = req.params.id;
+      const userId = req.user.claims.sub;
+      
+      await storage.removePropertyFavorite(propertyId, userId);
+      
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error removing property from favorites:", error);
+      res.status(500).json({ message: "Failed to remove from favorites" });
+    }
+  });
+
+  // Check if property is favorited by user
+  app.get("/api/properties/:id/is-favorited", isAuthenticated, async (req: any, res) => {
+    try {
+      const propertyId = req.params.id;
+      const userId = req.user.claims.sub;
+      
+      const isFavorited = await storage.isPropertyFavorited(propertyId, userId);
+      
+      res.json({ isFavorited });
+    } catch (error) {
+      console.error("Error checking if property is favorited:", error);
+      res.status(500).json({ message: "Failed to check favorite status" });
+    }
+  });
+
+  // Get user favorites
+  app.get("/api/user/favorites", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const favorites = await storage.getUserFavorites(userId);
+      res.json(favorites);
+    } catch (error) {
+      console.error("Error fetching user favorites:", error);
+      res.status(500).json({ message: "Failed to fetch favorites" });
     }
   });
 
@@ -232,6 +314,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching inquiries:", error);
       res.status(500).json({ message: "Failed to fetch inquiries" });
+    }
+  });
+
+  // Get agent metrics
+  app.get("/api/agent/metrics", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const metrics = await storage.getAgentMetrics(userId);
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching agent metrics:", error);
+      res.status(500).json({ message: "Failed to fetch metrics" });
     }
   });
 

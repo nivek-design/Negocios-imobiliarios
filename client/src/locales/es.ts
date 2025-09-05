@@ -50,9 +50,23 @@ export default {
   'search.propertiesFound': 'propiedades encontradas',
   'search.sortBy': 'Ordenar por',
   'search.newest': 'Más Recientes',
+  'search.oldest': 'Más Antiguos',
+  'search.sizeLargest': 'Área: Mayor',
+  'search.sizeSmallest': 'Área: Menor',
+  'search.bedroomsHigh': 'Más Dormitorios',
+  'search.bedroomsLow': 'Menos Dormitorios',
   'search.priceLowHigh': 'Precio (Menor a Mayor)',
   'search.priceHighLow': 'Precio (Mayor a Menor)',
   'search.sqft': 'Metros Cuadrados',
+
+  // Favorites
+  'property.addToFavorites': 'Añadir a Favoritos',
+  'property.removeFavorite': 'Quitar de Favoritos',
+  'property.addedToFavorites': '¡Añadido a favoritos!',
+  'property.removedFromFavorites': '¡Quitado de favoritos!',
+  'property.failedToAddToFavorites': 'Error al añadir a favoritos',
+  'property.failedToRemoveFromFavorites': 'Error al quitar de favoritos',
+  'property.myFavorites': 'Mis Favoritos',
 
   // Property Card
   'property.beds': 'habitaciones',

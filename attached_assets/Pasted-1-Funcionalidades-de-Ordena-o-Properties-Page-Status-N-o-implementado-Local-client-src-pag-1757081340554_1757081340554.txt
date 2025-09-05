@@ -1,0 +1,82 @@
+1. Funcionalidades de Ordenação (Properties Page)
+Status: ❌ Não implementado
+Local: client/src/pages/properties.tsx (linha 72)
+Descrição: O sistema de ordenação de propriedades não está funcional
+Implementar:
+Ordenação por preço (menor/maior)
+Ordenação por data (mais recente/mais antigo)
+Ordenação por tamanho (área)
+Ordenação por número de quartos/banheiros
+2. Métricas Reais do Dashboard
+Status: ❌ Usando dados simulados
+Local: client/src/pages/agent-dashboard.tsx (linhas 191-192)
+Descrição: totalViews e totalFavorites usam dados aleatórios (mock)
+Implementar:
+Sistema de contagem de visualizações de propriedades
+Sistema de favoritos/curtidas
+Tabelas no banco de dados para armazenar essas métricas
+APIs para registrar e consultar visualizações/favoritos
+3. Sistema de Imagens Aprimorado
+Status: ⚠️ Parcialmente implementado
+Local: client/src/components/property-card.tsx e property-detail.tsx
+Descrição: Usa placeholder do Unsplash quando não há imagens
+Implementar:
+Imagem padrão local para propriedades sem fotos
+Sistema de redimensionamento automático de imagens
+Galeria de imagens completa na página de detalhes
+Lazy loading para otimização
+4. Sistema de Controle de Acesso (Object ACL)
+Status: ❌ Estrutura criada mas não implementado
+Local: server/objectAcl.ts (linhas 89-99)
+Descrição: Sistema de controle de acesso para imagens privadas
+Implementar:
+Grupos de usuários (USER_LIST, EMAIL_DOMAIN, etc.)
+Permissões granulares para visualização de imagens
+Sistema de moderação de conteúdo
+5. Funcionalidades Avançadas Faltantes
+5.1 Sistema de Notificações
+Notificações para novos inquéritos
+Alertas de propriedades similares para interessados
+Notificações por email
+5.2 Sistema de Favoritos
+Usuários podem salvar propriedades favoritas
+Lista de favoritos no perfil do usuário
+Comparação entre propriedades
+5.3 Relatórios e Analytics
+Relatórios de performance para agentes
+Estatísticas de visualizações por período
+Relatórios de inquéritos e conversões
+5.4 SEO e Performance
+Meta tags dinâmicas para cada propriedade
+Sitemap XML automático
+Otimização de imagens
+Cache de consultas
+5.5 Recursos Mobile
+Progressive Web App (PWA)
+Notificações push
+Geolocalização para busca por proximidade
+6. Validações e Tratamento de Erros
+Status: ⚠️ Básico implementado
+Implementar:
+Validação mais robusta de formulários
+Tratamento de erros de upload de imagens
+Mensagens de erro mais específicas
+Rate limiting nas APIs
+7. Recursos de Administração
+Painel administrativo para super usuários
+Moderação de propriedades e usuários
+Configurações globais do sistema
+Backup e recuperação de dados
+📊 Prioridade de Implementação
+Alta Prioridade (Essencial)
+✅ Sistema de ordenação de propriedades
+✅ Métricas reais do dashboard
+✅ Imagens padrão locais
+Média Prioridade (Importante)
+Sistema de favoritos
+Notificações básicas
+SEO básico
+Baixa Prioridade (Futuro)
+Sistema ACL avançado
+PWA
+Painel administrativo

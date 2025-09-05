@@ -38,7 +38,7 @@ export default function Properties() {
     const params = new URLSearchParams();
     
     Object.entries(filters).forEach(([key, value]) => {
-      if (value && value !== "" && value !== []) {
+      if (value && value !== "" && (!Array.isArray(value) || value.length > 0)) {
         if (Array.isArray(value) && value.length > 0) {
           value.forEach(v => params.append(key, v));
         } else if (!Array.isArray(value)) {
@@ -49,6 +49,10 @@ export default function Properties() {
     
     params.set('limit', propertiesPerPage.toString());
     params.set('offset', ((currentPage - 1) * propertiesPerPage).toString());
+    
+    if (sortBy) {
+      params.set('sortBy', sortBy);
+    }
     
     return params.toString();
   };
@@ -69,7 +73,7 @@ export default function Properties() {
 
   const handleSortChange = (value: string) => {
     setSortBy(value);
-    // TODO: Implement sorting logic
+    setCurrentPage(1); // Reset to first page when sorting changes
   };
 
   return (
@@ -99,13 +103,17 @@ export default function Properties() {
                   </span>
                   <Select value={sortBy} onValueChange={handleSortChange}>
                     <SelectTrigger className="w-48" data-testid="select-sort">
-                      <SelectValue />
+                      <SelectValue placeholder={t('search.sortBy')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="newest">{t('search.sortBy')}: {t('search.newest')}</SelectItem>
-                      <SelectItem value="price-low">{t('search.sortBy')}: {t('search.priceLowHigh')}</SelectItem>
-                      <SelectItem value="price-high">{t('search.sortBy')}: {t('search.priceHighLow')}</SelectItem>
-                      <SelectItem value="sqft">{t('search.sortBy')}: {t('search.sqft')}</SelectItem>
+                      <SelectItem value="newest">{t('search.newest')}</SelectItem>
+                      <SelectItem value="oldest">{t('search.oldest')}</SelectItem>
+                      <SelectItem value="price-low">{t('search.priceLowHigh')}</SelectItem>
+                      <SelectItem value="price-high">{t('search.priceHighLow')}</SelectItem>
+                      <SelectItem value="size-high">{t('search.sizeLargest')}</SelectItem>
+                      <SelectItem value="size-low">{t('search.sizeSmallest')}</SelectItem>
+                      <SelectItem value="bedrooms-high">{t('search.bedroomsHigh')}</SelectItem>
+                      <SelectItem value="bedrooms-low">{t('search.bedroomsLow')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

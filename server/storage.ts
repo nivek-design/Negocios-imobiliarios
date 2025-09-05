@@ -2,15 +2,21 @@ import {
   users,
   properties,
   inquiries,
+  propertyViews,
+  propertyFavorites,
   type User,
   type UpsertUser,
   type Property,
   type InsertProperty,
   type Inquiry,
   type InsertInquiry,
+  type PropertyView,
+  type InsertPropertyView,
+  type PropertyFavorite,
+  type InsertPropertyFavorite,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, ilike, or } from "drizzle-orm";
+import { eq, desc, asc, and, gte, lte, ilike, or, sql } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -31,6 +37,15 @@ export interface IStorage {
   createInquiry(inquiry: InsertInquiry): Promise<Inquiry>;
   getInquiriesByAgent(agentId: string): Promise<Inquiry[]>;
   getInquiriesForProperty(propertyId: string): Promise<Inquiry[]>;
+  
+  // Property metrics operations
+  createPropertyView(view: InsertPropertyView): Promise<PropertyView>;
+  getPropertyViewsCount(propertyId: string): Promise<number>;
+  createPropertyFavorite(favorite: InsertPropertyFavorite): Promise<PropertyFavorite>;
+  removePropertyFavorite(propertyId: string, userId: string): Promise<void>;
+  getPropertyFavoritesCount(propertyId: string): Promise<number>;
+  isPropertyFavorited(propertyId: string, userId: string): Promise<boolean>;
+  getAgentMetrics(agentId: string): Promise<{ totalViews: number; totalFavorites: number }>;
 }
 
 export interface PropertyFilters {
@@ -42,6 +57,7 @@ export interface PropertyFilters {
   maxPrice?: number;
   bedrooms?: number;
   bathrooms?: number;
+  sortBy?: string;
   limit?: number;
   offset?: number;
 }
@@ -116,7 +132,39 @@ export class DatabaseStorage implements IStorage {
       query = query.where(and(...conditions));
     }
     
-    query = query.orderBy(desc(properties.createdAt));
+    // Add sorting logic
+    if (filters?.sortBy) {
+      switch (filters.sortBy) {
+        case 'price-low':
+          query = query.orderBy(asc(properties.price));
+          break;
+        case 'price-high':
+          query = query.orderBy(desc(properties.price));
+          break;
+        case 'newest':
+          query = query.orderBy(desc(properties.createdAt));
+          break;
+        case 'oldest':
+          query = query.orderBy(asc(properties.createdAt));
+          break;
+        case 'bedrooms-high':
+          query = query.orderBy(desc(properties.bedrooms));
+          break;
+        case 'bedrooms-low':
+          query = query.orderBy(asc(properties.bedrooms));
+          break;
+        case 'size-high':
+          query = query.orderBy(desc(properties.squareFeet));
+          break;
+        case 'size-low':
+          query = query.orderBy(asc(properties.squareFeet));
+          break;
+        default:
+          query = query.orderBy(desc(properties.createdAt));
+      }
+    } else {
+      query = query.orderBy(desc(properties.createdAt));
+    }
     
     if (filters?.limit) {
       query = query.limit(filters.limit);
@@ -206,6 +254,108 @@ export class DatabaseStorage implements IStorage {
       .from(inquiries)
       .where(eq(inquiries.propertyId, propertyId))
       .orderBy(desc(inquiries.createdAt));
+  }
+
+  // Property metrics operations
+  async createPropertyView(view: InsertPropertyView): Promise<PropertyView> {
+    const [created] = await db
+      .insert(propertyViews)
+      .values(view)
+      .returning();
+    return created;
+  }
+
+  async getPropertyViewsCount(propertyId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql`count(*)` })
+      .from(propertyViews)
+      .where(eq(propertyViews.propertyId, propertyId));
+    return Number(result[0]?.count || 0);
+  }
+
+  async createPropertyFavorite(favorite: InsertPropertyFavorite): Promise<PropertyFavorite> {
+    const [created] = await db
+      .insert(propertyFavorites)
+      .values(favorite)
+      .returning();
+    return created;
+  }
+
+  async removePropertyFavorite(propertyId: string, userId: string): Promise<void> {
+    await db
+      .delete(propertyFavorites)
+      .where(
+        and(
+          eq(propertyFavorites.propertyId, propertyId),
+          eq(propertyFavorites.userId, userId)
+        )
+      );
+  }
+
+  async getPropertyFavoritesCount(propertyId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql`count(*)` })
+      .from(propertyFavorites)
+      .where(eq(propertyFavorites.propertyId, propertyId));
+    return Number(result[0]?.count || 0);
+  }
+
+  async isPropertyFavorited(propertyId: string, userId: string): Promise<boolean> {
+    const result = await db
+      .select({ id: propertyFavorites.id })
+      .from(propertyFavorites)
+      .where(
+        and(
+          eq(propertyFavorites.propertyId, propertyId),
+          eq(propertyFavorites.userId, userId)
+        )
+      )
+      .limit(1);
+    return result.length > 0;
+  }
+
+  async getAgentMetrics(agentId: string): Promise<{ totalViews: number; totalFavorites: number }> {
+    // Get all properties for this agent
+    const agentProperties = await db
+      .select({ id: properties.id })
+      .from(properties)
+      .where(eq(properties.agentId, agentId));
+    
+    if (agentProperties.length === 0) {
+      return { totalViews: 0, totalFavorites: 0 };
+    }
+    
+    const propertyIds = agentProperties.map(p => p.id);
+    
+    // Count total views for agent's properties
+    const viewsResult = await db
+      .select({ count: sql`count(*)` })
+      .from(propertyViews)
+      .where(sql`${propertyViews.propertyId} = ANY(${propertyIds})`);
+    
+    // Count total favorites for agent's properties
+    const favoritesResult = await db
+      .select({ count: sql`count(*)` })
+      .from(propertyFavorites)
+      .where(sql`${propertyFavorites.propertyId} = ANY(${propertyIds})`);
+    
+    return {
+      totalViews: Number(viewsResult[0]?.count || 0),
+      totalFavorites: Number(favoritesResult[0]?.count || 0)
+    };
+  }
+
+  async getUserFavorites(userId: string): Promise<Property[]> {
+    const favoriteProperties = await db
+      .select({
+        property: properties,
+      })
+      .from(propertyFavorites)
+      .innerJoin(properties, eq(propertyFavorites.propertyId, properties.id))
+      .where(eq(propertyFavorites.userId, userId))
+      .orderBy(desc(propertyFavorites.createdAt));
+
+    return favoriteProperties.map(fp => fp.property);
   }
 }
 

@@ -1,6 +1,9 @@
 import { useParams } from "wouter";
+import { useEffect, useState } from "react";
 import Navigation from "@/components/navigation";
 import InquiryForm from "@/components/inquiry-form";
+import FavoriteButton from "@/components/favorite-button";
+import ImageGallery from "@/components/image-gallery";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -8,11 +11,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Bed, Bath, Square, MapPin, Home, Eye, Heart } from "lucide-react";
 import { Link } from "wouter";
 import { useI18n } from "@/contexts/I18nContext";
+import { getPropertyMainImage, handleImageError } from "@/lib/imageUtils";
 import type { Property } from "@shared/schema";
 
 export default function PropertyDetail() {
   const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryStartIndex, setGalleryStartIndex] = useState(0);
 
   const { data: property, isLoading, error } = useQuery<Property>({
     queryKey: ["/api/properties", id],
@@ -28,6 +34,21 @@ export default function PropertyDetail() {
     },
     enabled: !!id,
   });
+
+  // Record property view when component mounts
+  useEffect(() => {
+    if (id) {
+      // Record view (don't await - fire and forget)
+      fetch(`/api/properties/${id}/view`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).catch(() => {
+        // Silently fail - view tracking is not critical
+      });
+    }
+  }, [id]);
 
   const formatPrice = (price: string) => {
     const num = parseFloat(price);
@@ -118,18 +139,26 @@ export default function PropertyDetail() {
             <div>
               <div className="relative">
                 <img 
-                  src={property.images?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600'} 
+                  src={getPropertyMainImage(property.images)} 
                   alt={property.title}
-                  className="w-full h-64 md:h-96 object-cover rounded-lg mb-4"
+                  onError={handleImageError}
+                  className="w-full h-64 md:h-96 object-cover rounded-lg mb-4 cursor-pointer hover:opacity-90 transition-opacity"
                   data-testid="img-property-main"
+                  onClick={() => {
+                    if (property.images && property.images.length > 0) {
+                      setGalleryStartIndex(0);
+                      setIsGalleryOpen(true);
+                    }
+                  }}
                 />
                 <div className="absolute top-4 left-4">
                   {getStatusBadge(property.status)}
                 </div>
                 <div className="absolute top-4 right-4 flex space-x-2">
-                  <Button size="sm" variant="secondary" className="bg-white/80 hover:bg-white" data-testid="button-favorite">
-                    <Heart className="w-4 h-4" />
-                  </Button>
+                  <FavoriteButton 
+                    propertyId={property.id} 
+                    className="bg-white/80 hover:bg-white"
+                  />
                 </div>
               </div>
               
@@ -140,8 +169,13 @@ export default function PropertyDetail() {
                       key={index}
                       src={image}
                       alt={`${property.title} ${index + 2}`}
+                      onError={handleImageError}
                       className="w-full h-20 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                       data-testid={`img-gallery-${index + 1}`}
+                      onClick={() => {
+                        setGalleryStartIndex(index + 1);
+                        setIsGalleryOpen(true);
+                      }}
                     />
                   ))}
                 </div>
@@ -226,6 +260,17 @@ export default function PropertyDetail() {
           </div>
         ) : null}
       </div>
+
+      {/* Image Gallery Modal */}
+      {property && (
+        <ImageGallery
+          images={property.images || []}
+          title={property.title}
+          isOpen={isGalleryOpen}
+          onClose={() => setIsGalleryOpen(false)}
+          initialIndex={galleryStartIndex}
+        />
+      )}
     </div>
   );
 }
