@@ -233,6 +233,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: credential.role,
       };
       
+      // Ensure user exists in database
+      try {
+        await storage.upsertUser({
+          id: userSession.id,
+          email: userSession.email,
+          firstName: userSession.firstName,
+          lastName: userSession.lastName,
+        });
+      } catch (error) {
+        console.error("Error upserting user during login:", error);
+        return res.status(500).json({ message: "Erro ao processar dados do usuário" });
+      }
+      
       // Generate JWT token
       const token = generateToken(userSession, rememberMe);
       

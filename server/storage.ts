@@ -247,11 +247,11 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (filters?.limit) {
-      query = query.limit(filters.limit);
+      query = query.limit(filters.limit) as any;
     }
     
     if (filters?.offset) {
-      query = query.offset(filters.offset);
+      query = query.offset(filters.offset) as any;
     }
     
     let result = await query;
