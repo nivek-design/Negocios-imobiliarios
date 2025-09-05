@@ -6,13 +6,16 @@ import { ptBR } from 'date-fns/locale';
 
 // Initialize Twilio client only if credentials are properly configured
 let twilioClient: twilio.Twilio | null = null;
+let whatsappFromNumber: string | null = null;
 
 try {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
+  whatsappFromNumber = process.env.TWILIO_WHATSAPP_FROM || null;
   
-  if (accountSid && authToken && accountSid.startsWith('AC')) {
+  if (accountSid && authToken && whatsappFromNumber && accountSid.startsWith('AC')) {
     twilioClient = twilio(accountSid, authToken);
+    console.log('✅ Twilio WhatsApp configurado com sucesso!');
   } else {
     console.warn('Twilio credentials not properly configured. WhatsApp notifications will be disabled.');
   }
@@ -29,8 +32,9 @@ interface NotificationData {
 }
 
 export class NotificationService {
-  private formatAppointmentDate(dateString: string): string {
-    return format(new Date(dateString), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", {
+  private formatAppointmentDate(date: Date | string): string {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return format(dateObj, "dd 'de' MMMM 'de' yyyy 'às' HH:mm", {
       locale: ptBR
     });
   }
@@ -127,7 +131,7 @@ _Mensagem automática - Premier Properties_`;
         const formattedPhone = this.formatPhoneNumber(clientPhone);
         await twilioClient.messages.create({
           body: whatsappMessage,
-          from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
+          from: whatsappFromNumber!,
           to: `whatsapp:${formattedPhone}`
         });
       } catch (error) {
@@ -220,7 +224,7 @@ _Mensagem automática - Premier Properties_`;
         const formattedPhone = this.formatPhoneNumber(clientPhone);
         await twilioClient.messages.create({
           body: whatsappMessage,
-          from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
+          from: whatsappFromNumber!,
           to: `whatsapp:${formattedPhone}`
         });
       } catch (error) {
@@ -313,7 +317,7 @@ _Mensagem automática - Premier Properties_`;
         const formattedPhone = this.formatPhoneNumber(clientPhone);
         await twilioClient.messages.create({
           body: whatsappMessage,
-          from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
+          from: whatsappFromNumber!,
           to: `whatsapp:${formattedPhone}`
         });
       } catch (error) {
