@@ -124,7 +124,8 @@ export default function Properties() {
                   ...prev, 
                   search: searchInput,
                   latitude: location.lat,
-                  longitude: location.lng 
+                  longitude: location.lng,
+                  radius: 50 // Raio padrão de 50km
                 }));
               }}
               placeholder="Digite uma cidade, bairro ou endereço..."
@@ -141,7 +142,8 @@ export default function Properties() {
                   search: searchInput,
                   ...(selectedLocation && {
                     latitude: selectedLocation.lat,
-                    longitude: selectedLocation.lng
+                    longitude: selectedLocation.lng,
+                    radius: 50 // Raio padrão de 50km
                   })
                 }));
               }}
