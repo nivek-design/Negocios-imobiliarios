@@ -7,6 +7,7 @@ import { ZodError } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { geocodingService } from "./geocoding";
 import { sendEmail, generateAppointmentConfirmationEmail, generateAppointmentReminderEmail } from "./emailService";
+import { notificationService } from "./notificationService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -527,18 +528,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { id } = req.params;
       
-      const appointment = await storage.getAppointment(id);
-      if (!appointment) {
+      const originalAppointment = await storage.getAppointment(id);
+      if (!originalAppointment) {
         return res.status(404).json({ message: "Appointment not found" });
       }
       
       // Only the agent can update appointment
-      if (appointment.agentId !== userId) {
+      if (originalAppointment.agentId !== userId) {
         return res.status(403).json({ message: "Not authorized to update this appointment" });
       }
       
       const updates = req.body;
       const updatedAppointment = await storage.updateAppointment(id, updates);
+      
+      // Send notifications based on the type of update
+      try {
+        // Get additional data needed for notifications
+        const property = await storage.getProperty(updatedAppointment.propertyId);
+        const agent = await storage.getUser(updatedAppointment.agentId);
+        
+        const notificationData = {
+          appointment: updatedAppointment,
+          clientEmail: updatedAppointment.clientEmail,
+          clientPhone: updatedAppointment.clientPhone,
+          agentName: agent ? `${agent.firstName || ''} ${agent.lastName || ''}`.trim() : 'Corretor',
+          propertyAddress: property?.address || ''
+        };
+
+        // Check if status changed to confirmed
+        if (originalAppointment.status !== 'confirmed' && updatedAppointment.status === 'confirmed') {
+          await notificationService.sendConfirmationNotifications(notificationData);
+        }
+        // Check if appointment was rescheduled (date changed)
+        else if (originalAppointment.appointmentDate !== updatedAppointment.appointmentDate) {
+          await notificationService.sendRescheduleNotifications(
+            notificationData, 
+            typeof originalAppointment.appointmentDate === 'string' 
+              ? originalAppointment.appointmentDate 
+              : originalAppointment.appointmentDate.toISOString()
+          );
+        }
+        // Check if status changed to cancelled
+        else if (originalAppointment.status !== 'cancelled' && updatedAppointment.status === 'cancelled') {
+          await notificationService.sendCancellationNotifications(notificationData);
+        }
+
+        console.log(`Notifications sent for appointment ${id} update`);
+      } catch (notificationError) {
+        console.error("Failed to send notifications:", notificationError);
+        // Don't fail the request if notifications fail
+      }
+      
       res.json(updatedAppointment);
     } catch (error) {
       console.error("Error updating appointment:", error);
