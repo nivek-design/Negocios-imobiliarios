@@ -22,6 +22,7 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
     bedrooms: "",
     bathrooms: "",
     status: "",
+    radius: "",
     hasGarage: false,
     hasPool: false,
     hasBalcony: false,
@@ -173,6 +174,24 @@ export default function PropertySearch({ onFilterChange, initialFilters = {} }: 
               <SelectItem value="1">1+</SelectItem>
               <SelectItem value="2">2+</SelectItem>
               <SelectItem value="3">3+</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Distance Filter */}
+        <div>
+          <Label className="text-sm font-medium text-foreground mb-2 block">Raio de Distância</Label>
+          <Select value={filters.radius} onValueChange={(value) => handleInputChange('radius', value)}>
+            <SelectTrigger data-testid="select-radius">
+              <SelectValue placeholder="Qualquer distância" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Qualquer distância</SelectItem>
+              <SelectItem value="1">1 km</SelectItem>
+              <SelectItem value="2">2 km</SelectItem>
+              <SelectItem value="5">5 km</SelectItem>
+              <SelectItem value="10">10 km</SelectItem>
+              <SelectItem value="20">20 km</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -3,6 +3,7 @@ import Navigation from "@/components/navigation";
 import PropertyCard from "@/components/property-card";
 import PropertySearch from "@/components/property-search";
 import Map from "@/components/map";
+import LocationAutocomplete from "@/components/location-autocomplete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +19,7 @@ export default function Properties() {
   const [location] = useLocation();
   const [filters, setFilters] = useState<any>({});
   const [searchInput, setSearchInput] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState<{lat: number; lng: number} | null>(null);
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
@@ -108,19 +110,41 @@ export default function Properties() {
             <p className="text-lg opacity-90 mb-6">Use nossa busca avançada para encontrar a propriedade dos seus sonhos</p>
           </div>
           <div className="flex gap-2">
-            <Input
-              type="text"
-              placeholder="Digite uma cidade, bairro ou endereço..."
+            <LocationAutocomplete
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(value, location) => {
+                setSearchInput(value);
+                if (location) {
+                  setSelectedLocation(location);
+                }
+              }}
+              onLocationSelect={(location) => {
+                setSelectedLocation({ lat: location.lat, lng: location.lng });
+                setFilters(prev => ({ 
+                  ...prev, 
+                  search: searchInput,
+                  latitude: location.lat,
+                  longitude: location.lng 
+                }));
+              }}
+              placeholder="Digite uma cidade, bairro ou endereço..."
               className="flex-1 h-12 text-lg bg-white text-black"
-              data-testid="input-location-search"
             />
             <Button 
               size="lg" 
               variant="secondary"
               className="h-12 px-8"
               data-testid="button-search-location"
+              onClick={() => {
+                setFilters(prev => ({ 
+                  ...prev, 
+                  search: searchInput,
+                  ...(selectedLocation && {
+                    latitude: selectedLocation.lat,
+                    longitude: selectedLocation.lng
+                  })
+                }));
+              }}
             >
               Buscar
             </Button>

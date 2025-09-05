@@ -104,6 +104,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxPrice: req.query.maxPrice ? parseInt(req.query.maxPrice as string) : undefined,
         bedrooms: req.query.bedrooms ? parseInt(req.query.bedrooms as string) : undefined,
         bathrooms: req.query.bathrooms ? parseInt(req.query.bathrooms as string) : undefined,
+        // Location filters
+        latitude: req.query.latitude ? parseFloat(req.query.latitude as string) : undefined,
+        longitude: req.query.longitude ? parseFloat(req.query.longitude as string) : undefined,
+        radius: req.query.radius && req.query.radius !== 'any' ? parseInt(req.query.radius as string) : undefined,
         // Property features
         hasGarage: req.query.hasGarage === 'true' ? true : req.query.hasGarage === 'false' ? false : undefined,
         hasPool: req.query.hasPool === 'true' ? true : req.query.hasPool === 'false' ? false : undefined,

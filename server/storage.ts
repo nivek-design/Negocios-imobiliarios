@@ -18,6 +18,19 @@ import {
 import { db } from "./db";
 import { eq, desc, asc, and, gte, lte, ilike, or, sql, inArray } from "drizzle-orm";
 
+// Calculate distance between two coordinates using Haversine formula
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distance in kilometers
+}
+
 // Interface for storage operations
 export interface IStorage {
   // User operations
@@ -58,6 +71,10 @@ export interface PropertyFilters {
   maxPrice?: number;
   bedrooms?: number;
   bathrooms?: number;
+  // Location filters
+  latitude?: number;
+  longitude?: number;
+  radius?: number; // Distance in kilometers
   // Property features
   hasGarage?: boolean;
   hasPool?: boolean;
@@ -221,7 +238,25 @@ export class DatabaseStorage implements IStorage {
       query = query.offset(filters.offset);
     }
     
-    return await query;
+    let result = await query;
+    
+    // Apply distance filter if location and radius are provided
+    if (filters?.latitude && filters?.longitude && filters?.radius) {
+      result = result.filter(property => {
+        if (!property.latitude || !property.longitude) return false;
+        
+        const distance = calculateDistance(
+          filters.latitude!,
+          filters.longitude!,
+          parseFloat(property.latitude),
+          parseFloat(property.longitude)
+        );
+        
+        return distance <= filters.radius!;
+      });
+    }
+    
+    return result;
   }
 
   async getProperty(id: string): Promise<Property | undefined> {
