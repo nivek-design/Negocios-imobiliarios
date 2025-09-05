@@ -8,17 +8,23 @@ import Map from "@/components/map";
 import NeighborhoodInfo from "@/components/neighborhood-info";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Bed, Bath, Square, MapPin, Home, Eye, Heart } from "lucide-react";
+import { ArrowLeft, Bed, Bath, Square, MapPin, Home, Eye, Heart, Navigation as NavigationIcon } from "lucide-react";
 import { Link } from "wouter";
 import { useI18n } from "@/contexts/I18nContext";
 import { getPropertyMainImage, handleImageError } from "@/lib/imageUtils";
+import { useAuth } from "@/hooks/useAuth";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { Property } from "@shared/schema";
 
 export default function PropertyDetail() {
   const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [galleryStartIndex, setGalleryStartIndex] = useState(0);
 
@@ -51,6 +57,29 @@ export default function PropertyDetail() {
       });
     }
   }, [id]);
+
+  // Geocoding mutation
+  const geocodeMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest(`/api/properties/${id}/geocode`, {
+        method: 'POST',
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sucesso!",
+        description: "Coordenadas adicionadas com sucesso ao imóvel.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/properties", id] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível adicionar coordenadas ao imóvel.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const formatPrice = (price: string) => {
     const num = parseFloat(price);
@@ -263,28 +292,34 @@ export default function PropertyDetail() {
         ) : null}
 
         {/* Map and Location Section */}
-        {property?.latitude && property?.longitude && (
-          <div className="mt-12 space-y-8">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">Localização e Mapa</h2>
-              <p className="text-muted-foreground mb-6">
-                Veja a localização exata da propriedade e explore a vizinhança
-              </p>
-            </div>
-            
+        <div className="mt-12 space-y-8">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Localização</h2>
+            <p className="text-muted-foreground mb-6">
+              Informações sobre a localização da propriedade
+            </p>
+          </div>
+          
+          {/* Address Card - Always show */}
+          <div className="bg-card rounded-lg p-6 border border-border">
+            <h3 className="font-semibold text-foreground mb-3 flex items-center">
+              <MapPin className="w-5 h-5 mr-2 text-primary" />
+              Endereço Completo
+            </h3>
+            <p className="text-lg text-foreground mb-2">
+              {property.address}
+            </p>
+            <p className="text-muted-foreground">
+              {property.city}, {property.state} - CEP: {property.zipCode}
+            </p>
+          </div>
+          
+          {/* Map section - conditional */}
+          {property?.latitude && property?.longitude ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Map */}
-              <div className="space-y-4">
-                <div className="bg-card rounded-lg p-4 border border-border">
-                  <h3 className="font-semibold text-foreground mb-2 flex items-center">
-                    <MapPin className="w-4 h-4 mr-2 text-primary" />
-                    Endereço
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {property.address}, {property.city}, {property.state} {property.zipCode}
-                  </p>
-                </div>
-                
+              <div>
+                <h3 className="font-semibold text-foreground mb-4">Localização no Mapa</h3>
                 <Map
                   properties={[property]}
                   center={{
@@ -306,8 +341,27 @@ export default function PropertyDetail() {
                 />
               </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="bg-muted rounded-lg p-8 text-center">
+              <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="font-semibold text-foreground mb-2">Mapa não disponível</h3>
+              <p className="text-muted-foreground mb-4">
+                As coordenadas precisas desta propriedade ainda não foram adicionadas.
+              </p>
+              {user && property && user.id === property.agentId && (
+                <Button
+                  onClick={() => geocodeMutation.mutate()}
+                  disabled={geocodeMutation.isPending}
+                  className="mt-2"
+                  data-testid="button-geocode"
+                >
+                  <NavigationIcon className="w-4 h-4 mr-2" />
+                  {geocodeMutation.isPending ? "Adicionando..." : "Adicionar Localização no Mapa"}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Image Gallery Modal */}

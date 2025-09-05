@@ -5,6 +5,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertPropertySchema, insertInquirySchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { geocodingService } from "./geocoding";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -365,6 +366,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching property inquiries:", error);
       res.status(500).json({ message: "Failed to fetch inquiries" });
+    }
+  });
+
+  // Geocoding route - add coordinates to property
+  app.post("/api/properties/:id/geocode", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const property = await storage.getProperty(req.params.id);
+      
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      
+      if (property.agentId !== userId) {
+        return res.status(403).json({ message: "Not authorized to update this property" });
+      }
+      
+      if (property.latitude && property.longitude) {
+        return res.json({ 
+          message: "Property already has coordinates",
+          latitude: property.latitude,
+          longitude: property.longitude
+        });
+      }
+      
+      const coordinates = await geocodingService.geocodeAddress(
+        property.address,
+        property.city,
+        property.state,
+        property.zipCode
+      );
+      
+      if (!coordinates) {
+        return res.status(400).json({ message: "Could not geocode address" });
+      }
+      
+      const updatedProperty = await storage.updateProperty(req.params.id, {
+        latitude: coordinates.latitude.toString(),
+        longitude: coordinates.longitude.toString(),
+      });
+      
+      res.json({
+        message: "Coordinates added successfully",
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        property: updatedProperty
+      });
+    } catch (error) {
+      console.error("Error geocoding property:", error);
+      res.status(500).json({ message: "Failed to geocode property" });
     }
   });
 
