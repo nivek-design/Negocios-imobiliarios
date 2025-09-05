@@ -4,6 +4,7 @@ import {
   inquiries,
   propertyViews,
   propertyFavorites,
+  appointments,
   type User,
   type UpsertUser,
   type Property,
@@ -14,9 +15,11 @@ import {
   type InsertPropertyView,
   type PropertyFavorite,
   type InsertPropertyFavorite,
+  type Appointment,
+  type InsertAppointment,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and, gte, lte, ilike, or, sql, inArray } from "drizzle-orm";
+import { eq, desc, asc, and, gte, lte, lt, ilike, or, sql, inArray } from "drizzle-orm";
 
 // Calculate distance between two coordinates using Haversine formula
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -59,6 +62,15 @@ export interface IStorage {
   getPropertyFavoritesCount(propertyId: string): Promise<number>;
   isPropertyFavorited(propertyId: string, userId: string): Promise<boolean>;
   getAgentMetrics(agentId: string): Promise<{ totalViews: number; totalFavorites: number }>;
+  
+  // Appointment operations
+  createAppointment(appointment: InsertAppointment): Promise<Appointment>;
+  getAppointmentsByAgent(agentId: string): Promise<Appointment[]>;
+  getAppointmentsByProperty(propertyId: string): Promise<Appointment[]>;
+  getAppointment(id: string): Promise<Appointment | undefined>;
+  updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment>;
+  deleteAppointment(id: string): Promise<void>;
+  getAgentAvailableSlots(agentId: string, date: string): Promise<string[]>;
 }
 
 export interface PropertyFilters {
@@ -438,6 +450,107 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(propertyFavorites.createdAt));
 
     return favoriteProperties.map(fp => fp.property);
+  }
+
+  // Appointment operations
+  async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
+    const [newAppointment] = await db
+      .insert(appointments)
+      .values(appointment)
+      .returning();
+    return newAppointment;
+  }
+
+  async getAppointmentsByAgent(agentId: string): Promise<Appointment[]> {
+    return await db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.agentId, agentId))
+      .orderBy(asc(appointments.appointmentDate));
+  }
+
+  async getAppointmentsByProperty(propertyId: string): Promise<Appointment[]> {
+    return await db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.propertyId, propertyId))
+      .orderBy(asc(appointments.appointmentDate));
+  }
+
+  async getAppointment(id: string): Promise<Appointment | undefined> {
+    const [appointment] = await db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.id, id));
+    return appointment;
+  }
+
+  async updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment> {
+    const [updatedAppointment] = await db
+      .update(appointments)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(appointments.id, id))
+      .returning();
+    return updatedAppointment;
+  }
+
+  async deleteAppointment(id: string): Promise<void> {
+    await db
+      .delete(appointments)
+      .where(eq(appointments.id, id));
+  }
+
+  async getAgentAvailableSlots(agentId: string, date: string): Promise<string[]> {
+    // Get all appointments for the agent on the given date
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existingAppointments = await db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.agentId, agentId),
+          gte(appointments.appointmentDate, startOfDay),
+          lte(appointments.appointmentDate, endOfDay)
+        )
+      );
+
+    // Generate available time slots (9 AM to 6 PM, 1-hour intervals)
+    const allSlots = [];
+    for (let hour = 9; hour < 18; hour++) {
+      const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+      allSlots.push(timeSlot);
+    }
+
+    // Filter out occupied slots
+    const occupiedSlots = existingAppointments.map(apt => {
+      const date = new Date(apt.appointmentDate);
+      return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    });
+
+    return allSlots.filter(slot => !occupiedSlots.includes(slot));
+  }
+
+  async getAppointmentsByDateRange(startDate: string, endDate: string): Promise<Appointment[]> {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    return await db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          gte(appointments.appointmentDate, start),
+          lt(appointments.appointmentDate, end)
+        )
+      );
   }
 }
 

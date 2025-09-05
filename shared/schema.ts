@@ -111,6 +111,31 @@ export const propertyFavorites = pgTable("property_favorites", {
   index("property_favorites_property_user_idx").on(table.propertyId, table.userId),
 ]);
 
+export const appointmentStatusEnum = pgEnum("appointment_status", [
+  "scheduled",
+  "confirmed",
+  "cancelled",
+  "completed",
+  "no_show",
+]);
+
+export const appointments = pgTable("appointments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  propertyId: varchar("property_id").notNull().references(() => properties.id),
+  agentId: varchar("agent_id").notNull().references(() => users.id),
+  clientName: varchar("client_name", { length: 200 }).notNull(),
+  clientEmail: varchar("client_email", { length: 255 }).notNull(),
+  clientPhone: varchar("client_phone", { length: 20 }),
+  appointmentDate: timestamp("appointment_date").notNull(),
+  duration: integer("duration").notNull().default(60), // duration in minutes
+  status: appointmentStatusEnum("status").notNull().default("scheduled"),
+  notes: text("notes"),
+  reminderSent: boolean("reminder_sent").default(false),
+  confirmationSent: boolean("confirmation_sent").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const propertiesRelations = relations(properties, ({ one, many }) => ({
   agent: one(users, {
@@ -120,12 +145,14 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
   inquiries: many(inquiries),
   views: many(propertyViews),
   favorites: many(propertyFavorites),
+  appointments: many(appointments),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
   properties: many(properties),
   propertyViews: many(propertyViews),
   propertyFavorites: many(propertyFavorites),
+  appointments: many(appointments),
 }));
 
 export const inquiriesRelations = relations(inquiries, ({ one }) => ({
@@ -157,6 +184,17 @@ export const propertyFavoritesRelations = relations(propertyFavorites, ({ one })
   }),
 }));
 
+export const appointmentsRelations = relations(appointments, ({ one }) => ({
+  property: one(properties, {
+    fields: [appointments.propertyId],
+    references: [properties.id],
+  }),
+  agent: one(users, {
+    fields: [appointments.agentId],
+    references: [users.id],
+  }),
+}));
+
 // Zod schemas
 export const insertPropertySchema = createInsertSchema(properties).omit({
   id: true,
@@ -179,6 +217,12 @@ export const insertPropertyFavoriteSchema = createInsertSchema(propertyFavorites
   createdAt: true,
 });
 
+export const insertAppointmentSchema = createInsertSchema(appointments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const upsertUserSchema = createInsertSchema(users).pick({
   id: true,
   email: true,
@@ -198,3 +242,5 @@ export type PropertyView = typeof propertyViews.$inferSelect;
 export type InsertPropertyView = z.infer<typeof insertPropertyViewSchema>;
 export type PropertyFavorite = typeof propertyFavorites.$inferSelect;
 export type InsertPropertyFavorite = z.infer<typeof insertPropertyFavoriteSchema>;
+export type Appointment = typeof appointments.$inferSelect;
+export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;

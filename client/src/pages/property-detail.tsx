@@ -6,11 +6,12 @@ import FavoriteButton from "@/components/favorite-button";
 import ImageGallery from "@/components/image-gallery";
 import Map from "@/components/map";
 import NeighborhoodInfo from "@/components/neighborhood-info";
+import AppointmentForm from "@/components/appointment-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Bed, Bath, Square, MapPin, Home, Eye, Heart, Navigation as NavigationIcon } from "lucide-react";
+import { ArrowLeft, Bed, Bath, Square, MapPin, Home, Eye, Heart, Navigation as NavigationIcon, Calendar } from "lucide-react";
 import { Link } from "wouter";
 import { useI18n } from "@/contexts/I18nContext";
 import { getPropertyMainImage, handleImageError } from "@/lib/imageUtils";
@@ -280,11 +281,33 @@ export default function PropertyDetail() {
                 </div>
               </div>
               
-              {/* Contact Form */}
-              <InquiryForm 
-                propertyId={property.id} 
-                propertyTitle={property.title}
-              />
+              {/* Contact Section */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-foreground mb-3">Interesse na propriedade?</h2>
+                
+                {/* Action Buttons */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                  <AppointmentForm
+                    propertyId={property.id}
+                    agentId={property.agentId}
+                    propertyTitle={property.title}
+                    trigger={
+                      <Button 
+                        className="w-full h-12 text-base"
+                        data-testid="button-schedule-visit"
+                      >
+                        <Calendar className="w-5 h-5 mr-2" />
+                        Agendar Visita
+                      </Button>
+                    }
+                  />
+                  
+                  <InquiryForm 
+                    propertyId={property.id} 
+                    propertyTitle={property.title}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         ) : null}

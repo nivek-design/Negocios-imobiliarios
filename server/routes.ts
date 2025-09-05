@@ -2,10 +2,11 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertPropertySchema, insertInquirySchema } from "@shared/schema";
+import { insertPropertySchema, insertInquirySchema, insertAppointmentSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { geocodingService } from "./geocoding";
+import { sendEmail, generateAppointmentConfirmationEmail, generateAppointmentReminderEmail } from "./emailService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -182,7 +183,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createPropertyFavorite({
         propertyId,
         userId,
-        createdAt: new Date(),
       });
       
       res.status(200).json({ success: true });
@@ -416,6 +416,233 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error geocoding property:", error);
       res.status(500).json({ message: "Failed to geocode property" });
+    }
+  });
+
+  // ===== APPOINTMENT ROUTES =====
+  
+  // Create new appointment
+  app.post("/api/appointments", async (req, res) => {
+    try {
+      const appointmentData = insertAppointmentSchema.parse(req.body);
+      const appointment = await storage.createAppointment(appointmentData);
+      
+      // Send confirmation email to client
+      try {
+        // Get property details for the email
+        const property = await storage.getProperty(appointment.propertyId);
+        const propertyTitle = property?.title || "Propriedade";
+        const propertyAddress = property?.address || "";
+        
+        // Get agent details (if available)
+        const agent = await storage.getUser(appointment.agentId);
+        const agentName = agent ? `${agent.firstName || ''} ${agent.lastName || ''}`.trim() : "";
+        
+        const emailData = generateAppointmentConfirmationEmail({
+          clientName: appointment.clientName,
+          propertyTitle,
+          appointmentDate: appointment.appointmentDate.toISOString(),
+          propertyAddress,
+          agentName,
+          agentPhone: "", // Could be added to agent profile
+        });
+
+        await sendEmail({
+          to: appointment.clientEmail,
+          from: "noreply@premierproperties.com", // Update with your verified sender
+          subject: emailData.subject,
+          html: emailData.html,
+          text: emailData.text,
+        });
+
+        console.log(`Confirmation email sent to ${appointment.clientEmail}`);
+      } catch (emailError) {
+        console.error("Failed to send confirmation email:", emailError);
+        // Don't fail the request if email fails
+      }
+      
+      res.status(201).json(appointment);
+    } catch (error) {
+      console.error("Error creating appointment:", error);
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: "Invalid appointment data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create appointment" });
+    }
+  });
+
+  // Get agent's appointments
+  app.get("/api/agent/appointments", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const appointments = await storage.getAppointmentsByAgent(userId);
+      res.json(appointments);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+      res.status(500).json({ message: "Failed to fetch appointments" });
+    }
+  });
+
+  // Get property's appointments
+  app.get("/api/properties/:propertyId/appointments", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { propertyId } = req.params;
+      
+      // Verify the property belongs to the authenticated agent
+      const property = await storage.getProperty(propertyId);
+      if (!property || property.agentId !== userId) {
+        return res.status(403).json({ message: "Not authorized to view these appointments" });
+      }
+      
+      const appointments = await storage.getAppointmentsByProperty(propertyId);
+      res.json(appointments);
+    } catch (error) {
+      console.error("Error fetching property appointments:", error);
+      res.status(500).json({ message: "Failed to fetch appointments" });
+    }
+  });
+
+  // Get available time slots for an agent on a specific date
+  app.get("/api/agents/:agentId/available-slots", async (req, res) => {
+    try {
+      const { agentId } = req.params;
+      const { date } = req.query;
+      
+      if (!date || typeof date !== 'string') {
+        return res.status(400).json({ message: "Date parameter is required" });
+      }
+      
+      const availableSlots = await storage.getAgentAvailableSlots(agentId, date);
+      res.json(availableSlots);
+    } catch (error) {
+      console.error("Error fetching available slots:", error);
+      res.status(500).json({ message: "Failed to fetch available slots" });
+    }
+  });
+
+  // Update appointment status
+  app.put("/api/appointments/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      
+      const appointment = await storage.getAppointment(id);
+      if (!appointment) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+      
+      // Only the agent can update appointment
+      if (appointment.agentId !== userId) {
+        return res.status(403).json({ message: "Not authorized to update this appointment" });
+      }
+      
+      const updates = req.body;
+      const updatedAppointment = await storage.updateAppointment(id, updates);
+      res.json(updatedAppointment);
+    } catch (error) {
+      console.error("Error updating appointment:", error);
+      res.status(500).json({ message: "Failed to update appointment" });
+    }
+  });
+
+  // Delete appointment
+  app.delete("/api/appointments/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      
+      const appointment = await storage.getAppointment(id);
+      if (!appointment) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+      
+      // Only the agent can delete appointment
+      if (appointment.agentId !== userId) {
+        return res.status(403).json({ message: "Not authorized to delete this appointment" });
+      }
+      
+      await storage.deleteAppointment(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting appointment:", error);
+      res.status(500).json({ message: "Failed to delete appointment" });
+    }
+  });
+
+  // Send appointment reminders (can be called by a cron job or manually)
+  app.post("/api/appointments/send-reminders", async (req, res) => {
+    try {
+      // Get appointments for tomorrow
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      
+      const dayAfterTomorrow = new Date(tomorrow);
+      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+      
+      const upcomingAppointments = await storage.getAppointmentsByDateRange(
+        tomorrow.toISOString(),
+        dayAfterTomorrow.toISOString()
+      );
+      
+      let remindersSent = 0;
+      let failedReminders = 0;
+      
+      for (const appointment of upcomingAppointments) {
+        try {
+          // Skip if cancelled or completed
+          if (['cancelled', 'completed', 'no_show'].includes(appointment.status)) {
+            continue;
+          }
+          
+          // Get property and agent details
+          const property = await storage.getProperty(appointment.propertyId);
+          const agent = await storage.getUser(appointment.agentId);
+          
+          const propertyTitle = property?.title || "Propriedade";
+          const propertyAddress = property?.address || "";
+          const agentName = agent ? `${agent.firstName || ''} ${agent.lastName || ''}`.trim() : "";
+          
+          const emailData = generateAppointmentReminderEmail({
+            clientName: appointment.clientName,
+            propertyTitle,
+            appointmentDate: appointment.appointmentDate.toISOString(),
+            propertyAddress,
+            agentName,
+            agentPhone: "", // Could be added to agent profile
+          });
+
+          const emailSent = await sendEmail({
+            to: appointment.clientEmail,
+            from: "noreply@premierproperties.com",
+            subject: emailData.subject,
+            html: emailData.html,
+            text: emailData.text,
+          });
+
+          if (emailSent) {
+            remindersSent++;
+            console.log(`Reminder sent to ${appointment.clientEmail} for appointment ${appointment.id}`);
+          } else {
+            failedReminders++;
+          }
+        } catch (error) {
+          console.error(`Failed to send reminder for appointment ${appointment.id}:`, error);
+          failedReminders++;
+        }
+      }
+      
+      res.json({
+        message: "Reminder processing completed",
+        remindersSent,
+        failedReminders,
+        totalProcessed: upcomingAppointments.length
+      });
+      
+    } catch (error) {
+      console.error("Error processing appointment reminders:", error);
+      res.status(500).json({ message: "Failed to process reminders" });
     }
   });
 

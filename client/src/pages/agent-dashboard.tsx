@@ -13,8 +13,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Home, Mail, Eye, Heart, Plus, Edit, Trash2 } from "lucide-react";
-import type { Property, InsertProperty, Inquiry } from "@shared/schema";
+import { Home, Mail, Eye, Heart, Plus, Edit, Trash2, Calendar, Clock, User } from "lucide-react";
+import type { Property, InsertProperty, Inquiry, Appointment } from "@shared/schema";
+import AppointmentCalendar from "@/components/appointment-calendar";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function AgentDashboard() {
   const { t } = useI18n();
@@ -47,6 +50,12 @@ export default function AgentDashboard() {
 
   const { data: inquiries = [], isLoading: inquiriesLoading } = useQuery<Inquiry[]>({
     queryKey: ["/api/agent/inquiries"],
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
+  const { data: appointments = [], isLoading: appointmentsLoading } = useQuery<Appointment[]>({
+    queryKey: ["/api/agent/appointments"],
     enabled: isAuthenticated,
     retry: false,
   });
@@ -280,6 +289,10 @@ export default function AgentDashboard() {
           <TabsList>
             <TabsTrigger value="properties" data-testid="tab-properties">Properties</TabsTrigger>
             <TabsTrigger value="inquiries" data-testid="tab-inquiries">Inquiries</TabsTrigger>
+            <TabsTrigger value="appointments" data-testid="tab-appointments">
+              <Calendar className="w-4 h-4 mr-2" />
+              Agendamentos
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="properties" className="space-y-4">
@@ -470,6 +483,129 @@ export default function AgentDashboard() {
                   </CardContent>
                 </Card>
               )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="appointments" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Calendar Section */}
+              <div>
+                <h2 className="text-xl font-semibold text-foreground mb-4">Calendário de Agendamentos</h2>
+                <AppointmentCalendar
+                  agentId={isAuthenticated ? "agent-id" : ""}
+                  showAppointments={true}
+                />
+              </div>
+
+              {/* Appointments List */}
+              <div>
+                <h2 className="text-xl font-semibold text-foreground mb-4">Próximos Agendamentos</h2>
+                
+                <div className="space-y-4">
+                  {appointmentsLoading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <Card key={i}>
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-start">
+                              <Skeleton className="h-5 w-32" />
+                              <Skeleton className="h-4 w-20" />
+                            </div>
+                            <Skeleton className="h-4 w-48" />
+                            <Skeleton className="h-4 w-full" />
+                            <div className="flex space-x-2">
+                              <Skeleton className="h-8 w-20" />
+                              <Skeleton className="h-8 w-24" />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : appointments.length > 0 ? (
+                    appointments.map((appointment) => (
+                      <Card key={appointment.id}>
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold text-foreground flex items-center">
+                              <User className="w-4 h-4 mr-2 text-muted-foreground" />
+                              {appointment.clientName}
+                            </h4>
+                            <div className="flex items-center text-sm text-muted-foreground">
+                              <Clock className="w-4 h-4 mr-1" />
+                              {format(parseISO(appointment.appointmentDate), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                            </div>
+                          </div>
+                          
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Propriedade ID: {appointment.propertyId.slice(0, 8)}...
+                          </p>
+                          
+                          <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
+                            <span>📧 {appointment.clientEmail}</span>
+                            {appointment.clientPhone && <span>📞 {appointment.clientPhone}</span>}
+                          </div>
+                          
+                          {appointment.notes && (
+                            <p className="text-sm text-foreground mb-3 bg-muted/50 p-2 rounded">
+                              {appointment.notes}
+                            </p>
+                          )}
+                          
+                          <div className="flex justify-between items-center">
+                            <div className="flex space-x-2">
+                              <Button 
+                                size="sm" 
+                                variant={appointment.status === 'confirmed' ? 'default' : 'outline'}
+                                data-testid={`button-confirm-${appointment.id}`}
+                              >
+                                {appointment.status === 'confirmed' ? 'Confirmado' : 'Confirmar'}
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                data-testid={`button-reschedule-${appointment.id}`}
+                              >
+                                Reagendar
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                data-testid={`button-cancel-${appointment.id}`}
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                            
+                            <Badge 
+                              className={
+                                appointment.status === 'confirmed' ? 'bg-green-100 text-green-800 border-green-200' :
+                                appointment.status === 'scheduled' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                appointment.status === 'cancelled' ? 'bg-red-100 text-red-800 border-red-200' :
+                                'bg-gray-100 text-gray-800 border-gray-200'
+                              }
+                            >
+                              {appointment.status === 'scheduled' && 'Agendado'}
+                              {appointment.status === 'confirmed' && 'Confirmado'}
+                              {appointment.status === 'cancelled' && 'Cancelado'}
+                              {appointment.status === 'completed' && 'Concluído'}
+                              {appointment.status === 'no_show' && 'Faltou'}
+                            </Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <Card>
+                      <CardContent className="p-8 text-center">
+                        <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground" data-testid="text-no-appointments">
+                          Nenhum agendamento ainda. Quando os visitantes agendarem visitas às suas propriedades, elas aparecerão aqui.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
