@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useI18n } from "@/contexts/I18nContext";
 import type { InsertInquiry } from "@shared/schema";
 
 interface InquiryFormProps {
@@ -15,6 +16,7 @@ interface InquiryFormProps {
 }
 
 export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormProps) {
+  const { t } = useI18n();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
@@ -31,8 +33,8 @@ export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormPr
     },
     onSuccess: () => {
       toast({
-        title: "Inquiry Sent",
-        description: "Your inquiry has been sent to the agent. They will contact you soon.",
+        title: t('inquiry.success'),
+        description: t('inquiry.successMessage'),
       });
       setFormData({
         firstName: "",
@@ -45,8 +47,8 @@ export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormPr
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: "Failed to send inquiry. Please try again.",
+        title: t('inquiry.error'),
+        description: t('inquiry.errorMessage'),
         variant: "destructive",
       });
       console.error("Error creating inquiry:", error);
@@ -62,8 +64,8 @@ export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormPr
     
     if (!formData.firstName || !formData.lastName || !formData.email) {
       toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields",
+        title: t('inquiry.validationError'),
+        description: t('inquiry.requiredFields'),
         variant: "destructive",
       });
       return;
@@ -78,13 +80,13 @@ export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormPr
   return (
     <Card>
       <CardHeader>
-        <CardTitle data-testid="text-inquiry-form-title">Interested in this property?</CardTitle>
+        <CardTitle data-testid="text-inquiry-form-title">{t('inquiry.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="firstName">First Name *</Label>
+              <Label htmlFor="firstName">{t('inquiry.firstName')}</Label>
               <Input
                 id="firstName"
                 value={formData.firstName}
@@ -95,7 +97,7 @@ export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormPr
               />
             </div>
             <div>
-              <Label htmlFor="lastName">Last Name *</Label>
+              <Label htmlFor="lastName">{t('inquiry.lastName')}</Label>
               <Input
                 id="lastName"
                 value={formData.lastName}
@@ -108,7 +110,7 @@ export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormPr
           </div>
           
           <div>
-            <Label htmlFor="email">Email Address *</Label>
+            <Label htmlFor="email">{t('inquiry.email')}</Label>
             <Input
               id="email"
               type="email"
@@ -121,7 +123,7 @@ export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormPr
           </div>
           
           <div>
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone">{t('inquiry.phone')}</Label>
             <Input
               id="phone"
               type="tel"
@@ -133,12 +135,12 @@ export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormPr
           </div>
           
           <div>
-            <Label htmlFor="message">Message</Label>
+            <Label htmlFor="message">{t('inquiry.message')}</Label>
             <Textarea
               id="message"
               value={formData.message}
               onChange={(e) => handleInputChange('message', e.target.value)}
-              placeholder={`I'm interested in ${propertyTitle}. Please contact me with more information.`}
+              placeholder={t('inquiry.messagePlaceholder').replace('{title}', propertyTitle)}
               rows={3}
               data-testid="textarea-message"
             />
@@ -150,7 +152,7 @@ export default function InquiryForm({ propertyId, propertyTitle }: InquiryFormPr
             className="w-full"
             data-testid="button-send-inquiry"
           >
-            {createInquiryMutation.isPending ? 'Sending...' : 'Send Inquiry'}
+            {createInquiryMutation.isPending ? t('inquiry.sending') : t('inquiry.send')}
           </Button>
         </form>
       </CardContent>

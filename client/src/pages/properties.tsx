@@ -7,9 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useI18n } from "@/contexts/I18nContext";
 import type { Property } from "@shared/schema";
 
 export default function Properties() {
+  const { t } = useI18n();
   const [location] = useLocation();
   const [filters, setFilters] = useState<any>({});
   const [sortBy, setSortBy] = useState("newest");
@@ -89,21 +91,21 @@ export default function Properties() {
             <div className="lg:w-3/4">
               <div className="mb-6 flex justify-between items-center">
                 <h1 className="text-2xl font-semibold text-foreground" data-testid="text-search-results">
-                  Search Results
+                  {t('search.results')}
                 </h1>
                 <div className="flex items-center space-x-4">
                   <span className="text-muted-foreground" data-testid="text-results-count">
-                    {properties.length} properties found
+                    {properties.length} {t('search.propertiesFound')}
                   </span>
                   <Select value={sortBy} onValueChange={handleSortChange}>
                     <SelectTrigger className="w-48" data-testid="select-sort">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="newest">Sort by: Newest</SelectItem>
-                      <SelectItem value="price-low">Sort by: Price (Low to High)</SelectItem>
-                      <SelectItem value="price-high">Sort by: Price (High to Low)</SelectItem>
-                      <SelectItem value="sqft">Sort by: Square Feet</SelectItem>
+                      <SelectItem value="newest">{t('search.sortBy')}: {t('search.newest')}</SelectItem>
+                      <SelectItem value="price-low">{t('search.sortBy')}: {t('search.priceLowHigh')}</SelectItem>
+                      <SelectItem value="price-high">{t('search.sortBy')}: {t('search.priceHighLow')}</SelectItem>
+                      <SelectItem value="sqft">{t('search.sortBy')}: {t('search.sqft')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -132,10 +134,10 @@ export default function Properties() {
                 ) : (
                   <div className="col-span-full text-center py-12">
                     <p className="text-muted-foreground text-lg" data-testid="text-no-properties">
-                      No properties found matching your criteria.
+                      {t('common.noResults')}.
                     </p>
                     <p className="text-muted-foreground mt-2">
-                      Try adjusting your filters or search terms.
+                      {t('common.tryAdjustFilters')}
                     </p>
                   </div>
                 )}
@@ -151,7 +153,7 @@ export default function Properties() {
                       disabled={currentPage === 1}
                       data-testid="button-previous"
                     >
-                      Previous
+                      {t('common.previous')}
                     </Button>
                     <Button 
                       variant="default"
@@ -165,7 +167,7 @@ export default function Properties() {
                       disabled={properties.length < propertiesPerPage}
                       data-testid="button-next"
                     >
-                      Next
+                      {t('common.next')}
                     </Button>
                   </nav>
                 </div>

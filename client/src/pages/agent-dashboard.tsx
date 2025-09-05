@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { useI18n } from "@/contexts/I18nContext";
 import Navigation from "@/components/navigation";
 import PropertyForm from "@/components/property-form";
 import { Button } from "@/components/ui/button";
@@ -13,9 +14,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Home, Mail, Eye, Heart, Plus, Edit, Trash2 } from "lucide-react";
-import type { Property, InsertProperty } from "@shared/schema";
+import type { Property, InsertProperty, Inquiry } from "@shared/schema";
 
 export default function AgentDashboard() {
+  const { t } = useI18n();
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
@@ -26,8 +28,8 @@ export default function AgentDashboard() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: t('common.unauthorized'),
+        description: t('common.loggedOut'),
         variant: "destructive",
       });
       setTimeout(() => {
@@ -43,7 +45,7 @@ export default function AgentDashboard() {
     retry: false,
   });
 
-  const { data: inquiries = [], isLoading: inquiriesLoading } = useQuery({
+  const { data: inquiries = [], isLoading: inquiriesLoading } = useQuery<Inquiry[]>({
     queryKey: ["/api/agent/inquiries"],
     enabled: isAuthenticated,
     retry: false,
@@ -55,8 +57,8 @@ export default function AgentDashboard() {
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Property created successfully",
+        title: t('common.success'),
+        description: t('property.createdSuccessfully'),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/agent/properties"] });
       setIsPropertyFormOpen(false);
@@ -74,8 +76,8 @@ export default function AgentDashboard() {
         return;
       }
       toast({
-        title: "Error",
-        description: "Failed to create property",
+        title: t('common.error'),
+        description: t('property.failedToCreate'),
         variant: "destructive",
       });
     },
@@ -121,7 +123,7 @@ export default function AgentDashboard() {
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Property deleted successfully",
+        description: t('property.deletedSuccessfully'),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/agent/properties"] });
     },
@@ -139,7 +141,7 @@ export default function AgentDashboard() {
       }
       toast({
         title: "Error",
-        description: "Failed to delete property",
+        description: t('property.failedToDelete'),
         variant: "destructive",
       });
     },
@@ -159,7 +161,7 @@ export default function AgentDashboard() {
   };
 
   const handleDeleteProperty = (id: string) => {
-    if (confirm("Are you sure you want to delete this property?")) {
+    if (confirm(t('property.confirmDelete'))) {
       deletePropertyMutation.mutate(id);
     }
   };
@@ -196,10 +198,10 @@ export default function AgentDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-4" data-testid="text-dashboard-title">
-            Agent Dashboard
+            {t('dashboard.title')}
           </h1>
           <p className="text-muted-foreground">
-            Manage your property listings and client inquiries
+            {t('dashboard.description')}
           </p>
         </div>
 
@@ -209,7 +211,7 @@ export default function AgentDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-muted-foreground text-sm">Active Listings</p>
+                  <p className="text-muted-foreground text-sm">{t('dashboard.activeListings')}</p>
                   <p className="text-3xl font-bold text-foreground" data-testid="text-active-listings">
                     {activeListings}
                   </p>
@@ -225,7 +227,7 @@ export default function AgentDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-muted-foreground text-sm">Inquiries</p>
+                  <p className="text-muted-foreground text-sm">{t('dashboard.inquiries')}</p>
                   <p className="text-3xl font-bold text-foreground" data-testid="text-inquiries-count">
                     {inquiries.length}
                   </p>
