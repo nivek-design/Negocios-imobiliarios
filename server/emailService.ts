@@ -212,3 +212,59 @@ export function generateAppointmentReminderEmail(appointment: {
 
   return { subject, html, text };
 }
+
+// Email templates for inquiries
+export function generateInquiryNotificationEmail(inquiry: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  message?: string;
+}, property: {
+  title: string;
+  address?: string;
+  city?: string;
+}) {
+  const subject = `Nova Consulta - ${property.title}`;
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h2 style="color: #2563eb; margin-bottom: 20px;">Nova Consulta Recebida! 📧</h2>
+      
+      <p>Uma nova consulta foi recebida para a propriedade:</p>
+      
+      <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #1e293b; margin: 0 0 15px 0;">Dados da Consulta:</h3>
+        <p><strong>Propriedade:</strong> ${property.title}</p>
+        ${property.address ? `<p><strong>Endereço:</strong> ${property.address}</p>` : ''}
+        <p><strong>Nome:</strong> ${inquiry.firstName} ${inquiry.lastName}</p>
+        <p><strong>Email:</strong> ${inquiry.email}</p>
+        ${inquiry.phone ? `<p><strong>Telefone:</strong> ${inquiry.phone}</p>` : ''}
+        ${inquiry.message ? `<p><strong>Mensagem:</strong></p><p style="font-style: italic; background-color: #f1f5f9; padding: 10px; border-radius: 4px;">"${inquiry.message}"</p>` : ''}
+      </div>
+      
+      <p>Entre em contato com o interessado o quanto antes para agendar uma visita!</p>
+      
+      <p style="margin-top: 30px;">Sistema Premier Properties</p>
+    </div>
+  `;
+
+  const text = `
+    Nova Consulta Recebida!
+
+    Uma nova consulta foi recebida para a propriedade: ${property.title}
+
+    Dados da Consulta:
+    - Nome: ${inquiry.firstName} ${inquiry.lastName}
+    - Email: ${inquiry.email}
+    ${inquiry.phone ? `- Telefone: ${inquiry.phone}` : ''}
+    ${property.address ? `- Endereço: ${property.address}` : ''}
+    ${inquiry.message ? `- Mensagem: "${inquiry.message}"` : ''}
+
+    Entre em contato com o interessado o quanto antes para agendar uma visita!
+
+    Sistema Premier Properties
+  `;
+
+  return { subject, html, text };
+}
