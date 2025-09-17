@@ -28,6 +28,13 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// Registration status enum for user approval workflow
+export const registrationStatusEnum = pgEnum("registration_status", [
+  "pending",
+  "approved",
+  "rejected",
+]);
+
 // User storage table - using Supabase Auth
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -38,6 +45,12 @@ export const users = pgTable("users", {
   role: varchar("role", { length: 20 }).default("client").notNull(), // client, agent, admin
   isActive: boolean("is_active").default(true).notNull(),
   lastLoginAt: timestamp("last_login_at"),
+  // Registration approval fields
+  registrationStatus: registrationStatusEnum("registration_status").default("pending").notNull(),
+  approvedBy: varchar("approved_by").references(() => users.id, { onDelete: "set null" }),
+  approvedAt: timestamp("approved_at"),
+  rejectedAt: timestamp("rejected_at"),
+  rejectionReason: text("rejection_reason"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   deletedAt: timestamp("deleted_at"),
@@ -46,12 +59,22 @@ export const users = pgTable("users", {
   index("idx_users_email").on(table.email),
   index("idx_users_role").on(table.role),
   index("idx_users_active").on(table.isActive),
+  index("idx_users_registration_status").on(table.registrationStatus),
+  index("idx_users_approved_by").on(table.approvedBy),
   index("idx_users_created_at").on(table.createdAt),
   index("idx_users_deleted_at").on(table.deletedAt),
+  // Composite indexes for approval workflow
+  index("idx_users_role_registration_status").on(table.role, table.registrationStatus),
+  index("idx_users_approved_by_approved_at").on(table.approvedBy, table.approvedAt),
   // Email uniqueness enforced at application level with soft delete awareness
   // Data validation
   check("check_users_email_valid", sql`email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'`),
   check("check_users_role_valid", sql`role IN ('client', 'agent', 'admin')`),
+  // Comprehensive approval workflow constraints
+  check("check_users_approved_integrity", sql`(registration_status = 'approved' AND approved_at IS NOT NULL AND approved_by IS NOT NULL) OR registration_status != 'approved'`),
+  check("check_users_not_approved_nulls", sql`(registration_status != 'approved' AND approved_at IS NULL AND approved_by IS NULL) OR registration_status = 'approved'`),
+  check("check_users_rejected_integrity", sql`(registration_status = 'rejected' AND rejected_at IS NOT NULL AND rejection_reason IS NOT NULL) OR registration_status != 'rejected'`),
+  check("check_users_not_rejected_nulls", sql`(registration_status != 'rejected' AND rejected_at IS NULL AND rejection_reason IS NULL) OR registration_status = 'rejected'`),
 ]);
 
 export const propertyTypeEnum = pgEnum("property_type", [
@@ -422,6 +445,18 @@ export interface QueryMetrics {
   indexesUsed?: string[];
 }
 
+// Secure user registration schema - omits sensitive fields
+export const insertUserSchema = createInsertSchema(users).pick({
+  email: true,
+  firstName: true,
+  lastName: true,
+  profileImageUrl: true,
+}).extend({
+  email: z.string().email("Invalid email format"),
+  firstName: z.string().min(1, "First name is required").max(100),
+  lastName: z.string().min(1, "Last name is required").max(100),
+});
+
 export const insertAppointmentSchema = createInsertSchema(appointments).omit({
   id: true,
   createdAt: true,
@@ -435,16 +470,32 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
   ]).transform((val) => val instanceof Date ? val : new Date(val)),
 });
 
+// Admin-only schema for updating user data (used internally)
 export const upsertUserSchema = createInsertSchema(users).pick({
   id: true,
   email: true,
   firstName: true,
   lastName: true,
   profileImageUrl: true,
+  role: true,
+  registrationStatus: true,
+});
+
+export const approveUserSchema = z.object({
+  userId: z.string().uuid(),
+  // approvedBy and approvedAt are set automatically by the server
+});
+
+export const rejectUserSchema = z.object({
+  userId: z.string().uuid(),
+  rejectionReason: z.string().min(1, "Rejection reason is required"),
 });
 
 // Types
+export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
+export type ApproveUser = z.infer<typeof approveUserSchema>;
+export type RejectUser = z.infer<typeof rejectUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Property = typeof properties.$inferSelect;
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
