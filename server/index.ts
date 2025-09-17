@@ -105,6 +105,10 @@ app.use(logResponse);
     logger.info('Static file serving configured for production');
   }
 
+  // Add notFoundHandler AFTER Vite setup to avoid intercepting frontend routes
+  const { notFoundHandler } = await import('./middlewares/error');
+  app.use(notFoundHandler);
+
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.

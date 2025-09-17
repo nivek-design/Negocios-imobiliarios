@@ -129,8 +129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { cacheHealthCheck } = await import("../middlewares/cache");
   app.get("/api/health/cache", cacheHealthCheck);
 
-  // Error handling middleware (must be last)
-  app.use(notFoundHandler);
+  // Error handling middleware (notFoundHandler will be added after Vite setup)
   app.use(errorHandler);
 
   // Create HTTP server
