@@ -13,11 +13,31 @@ import {
   globalRateLimit, 
   ipBlockingMiddleware
 } from "./middlewares/rateLimiting";
+import {
+  initializeRequestLogging,
+  logRequest,
+  logResponse,
+  logError,
+  requestResponseLogger
+} from "./middlewares/logging";
+import { logger } from "./core/logger";
+import { performanceMonitor } from "./core/monitoring";
+import { healthMonitor } from "./core/health";
 
 const app = express();
 
 // 🔒 TRUST PROXY CONFIGURATION - Critical for rate limiting security
 app.set('trust proxy', 1); // Trust first proxy (required for proper IP detection)
+
+// 📊 INITIALIZE MONITORING AND LOGGING
+logger.info('Starting Kalross Real Estate server', {
+  environment: config.nodeEnv,
+  version: process.env.npm_package_version || '1.0.0',
+  nodeVersion: process.version,
+});
+
+// 📊 REQUEST LOGGING INITIALIZATION - Must be early for proper context
+app.use(initializeRequestLogging);
 
 // 🔒 SECURITY MIDDLEWARE - Applied before all other middleware
 // IP blocking (first line of defense)
@@ -48,37 +68,13 @@ app.use(express.urlencoded({
 // Input sanitization
 app.use(sanitizeInputs);
 
+// 📊 REQUEST LOGGING - Log all incoming requests
+app.use(logRequest);
+
 // Note: SQL injection and path traversal protection are mounted on /api routes in routes/index.ts
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
-    }
-  });
-
-  next();
-});
+// 📊 RESPONSE LOGGING - Log all outgoing responses with performance metrics
+app.use(logResponse);
 
 (async () => {
   const server = await registerRoutes(app);
@@ -88,19 +84,25 @@ app.use((req, res, next) => {
     try {
       const { createTestUsers } = await import('./testUsers');
       await createTestUsers();
+      logger.info('Test users created successfully');
     } catch (error) {
-      console.log('Test users creation skipped:', error);
+      logger.warn('Test users creation skipped', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
 
+  // Add error handling middleware (must be after routes)
+  app.use(logError);
+  
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
+    logger.info('Vite development server configured');
   } else {
     serveStatic(app);
+    logger.info('Static file serving configured for production');
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
@@ -113,6 +115,43 @@ app.use((req, res, next) => {
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
+    logger.info('Server started successfully', {
+      port,
+      host: '0.0.0.0',
+      environment: config.nodeEnv,
+      process: {
+        pid: process.pid,
+        nodeVersion: process.version,
+        platform: process.platform,
+        arch: process.arch,
+      },
+      monitoring: {
+        performanceMonitorActive: true,
+        healthMonitorActive: true,
+      },
+    });
+    
     log(`serving on port ${port}`);
+  });
+  
+  // Graceful shutdown handling
+  process.on('SIGTERM', () => {
+    logger.info('SIGTERM received, starting graceful shutdown');
+    server.close(() => {
+      logger.info('HTTP server closed');
+      healthMonitor.shutdown();
+      logger.info('Health monitor shutdown');
+      process.exit(0);
+    });
+  });
+  
+  process.on('SIGINT', () => {
+    logger.info('SIGINT received, starting graceful shutdown');
+    server.close(() => {
+      logger.info('HTTP server closed');
+      healthMonitor.shutdown();
+      logger.info('Health monitor shutdown');
+      process.exit(0);
+    });
   });
 })();

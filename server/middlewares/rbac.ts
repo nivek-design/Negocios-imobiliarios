@@ -2,16 +2,108 @@ import { AuthorizationError, ErrorMessages } from '../core/errors';
 import { asyncHandler } from '../core/asyncHandler';
 import { AuthenticatedRequest, UserRoles } from '../core/types';
 import { requireAuth } from './auth';
+import { createRequestLogger, createModuleLogger } from '../core/logger';
 
 /**
- * ROLE-BASED ACCESS CONTROL (RBAC) MIDDLEWARE
- * Provides role-based authorization for different user types
+ * ENHANCED ROLE-BASED ACCESS CONTROL (RBAC) MIDDLEWARE
+ * Provides role-based authorization with comprehensive security audit logging
  */
+
+// Module logger for authorization security events
+const rbacLogger = createModuleLogger('Authorization');
+
+// Track authorization attempts for suspicious activity detection
+const authorizationAttempts = new Map<string, { count: number; failures: number; lastAttempt: number }>();
 
 // Helper function to check user roles consistently
 const checkUserRole = (user: any, allowedRoles: string[]): boolean => {
   const userRole = user?.role;
   return userRole && allowedRoles.includes(userRole);
+};
+
+// Helper function to log authorization events
+const logAuthorizationEvent = (
+  req: any, 
+  user: AuthenticatedRequest['user'], 
+  requiredRoles: string[], 
+  success: boolean, 
+  context: string
+): void => {
+  const logger = req.logger || createRequestLogger(req);
+  const ip = req.ip || req.connection.remoteAddress;
+  const userAgent = req.headers['user-agent'];
+  
+  // Track authorization attempts by user and IP
+  const key = `${user?.id || 'unknown'}_${ip}`;
+  const current = authorizationAttempts.get(key) || { count: 0, failures: 0, lastAttempt: 0 };
+  
+  current.count++;
+  current.lastAttempt = Date.now();
+  
+  if (!success) {
+    current.failures++;
+  }
+  
+  authorizationAttempts.set(key, current);
+  
+  // Log the authorization event
+  const logLevel = success ? 'info' : 'warn';
+  const eventDetails = {
+    userId: user?.id,
+    userRole: user?.role,
+    requiredRoles,
+    success,
+    context,
+    path: req.path,
+    method: req.method,
+    ip,
+    userAgent,
+    timestamp: new Date().toISOString(),
+  };
+  
+  logger[logLevel](`Authorization ${success ? 'granted' : 'denied'}: ${context}`, eventDetails);
+  
+  // Log security event for audit trail
+  rbacLogger.logSecurityEvent({
+    type: success ? 'DATA_ACCESS' : 'AUTHORIZATION_FAILURE',
+    severity: success ? 'LOW' : 'MEDIUM',
+    userId: user?.id,
+    ip,
+    userAgent,
+    details: {
+      context,
+      requiredRoles,
+      userRole: user?.role,
+      success,
+      ...eventDetails,
+    },
+  });
+  
+  // Detect suspicious authorization patterns
+  if (!success && current.failures >= 3) {
+    rbacLogger.logSecurityEvent({
+      type: 'SUSPICIOUS_ACTIVITY',
+      severity: 'HIGH',
+      userId: user?.id,
+      ip,
+      userAgent,
+      details: {
+        reason: 'repeated_authorization_failures',
+        failureCount: current.failures,
+        totalAttempts: current.count,
+        context,
+        timeWindow: Date.now() - current.lastAttempt,
+      },
+    });
+  }
+  
+  // Clean up old entries (older than 1 hour)
+  const oneHourAgo = Date.now() - 3600000;
+  for (const [key, value] of authorizationAttempts.entries()) {
+    if (value.lastAttempt < oneHourAgo) {
+      authorizationAttempts.delete(key);
+    }
+  }
 };
 
 /**
@@ -28,8 +120,13 @@ export const requireAgent = asyncHandler(async (req: any, res: any, next) => {
   });
 
   const user = (req as AuthenticatedRequest).user;
+  const requiredRoles = [UserRoles.AGENT, UserRoles.ADMIN];
+  const hasAccess = checkUserRole(user, requiredRoles);
   
-  if (!checkUserRole(user, [UserRoles.AGENT, UserRoles.ADMIN])) {
+  // Log authorization event
+  logAuthorizationEvent(req, user, requiredRoles, hasAccess, 'requireAgent');
+  
+  if (!hasAccess) {
     throw new AuthorizationError(ErrorMessages.AGENT_ADMIN_ONLY);
   }
   
@@ -50,8 +147,13 @@ export const requireAdmin = asyncHandler(async (req: any, res: any, next) => {
   });
 
   const user = (req as AuthenticatedRequest).user;
+  const requiredRoles = [UserRoles.ADMIN];
+  const hasAccess = checkUserRole(user, requiredRoles);
   
-  if (!checkUserRole(user, [UserRoles.ADMIN])) {
+  // Log authorization event
+  logAuthorizationEvent(req, user, requiredRoles, hasAccess, 'requireAdmin');
+  
+  if (!hasAccess) {
     throw new AuthorizationError(ErrorMessages.ADMIN_ONLY);
   }
   
@@ -72,8 +174,13 @@ export const requireClient = asyncHandler(async (req: any, res: any, next) => {
   });
 
   const user = (req as AuthenticatedRequest).user;
+  const requiredRoles = [UserRoles.CLIENT];
+  const hasAccess = checkUserRole(user, requiredRoles);
   
-  if (!checkUserRole(user, [UserRoles.CLIENT])) {
+  // Log authorization event
+  logAuthorizationEvent(req, user, requiredRoles, hasAccess, 'requireClient');
+  
+  if (!hasAccess) {
     throw new AuthorizationError('Acesso negado. Apenas clientes.');
   }
   
@@ -95,8 +202,12 @@ export const requireRoles = (allowedRoles: string[]) => {
     });
 
     const user = (req as AuthenticatedRequest).user;
+    const hasAccess = checkUserRole(user, allowedRoles);
     
-    if (!checkUserRole(user, allowedRoles)) {
+    // Log authorization event
+    logAuthorizationEvent(req, user, allowedRoles, hasAccess, 'requireRoles');
+    
+    if (!hasAccess) {
       const roleList = allowedRoles.join(', ');
       throw new AuthorizationError(`Acesso negado. Roles permitidas: ${roleList}`);
     }

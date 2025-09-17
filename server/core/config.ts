@@ -223,6 +223,135 @@ export const config = {
     },
   },
 
+  // Comprehensive Logging Configuration
+  logging: {
+    // Global logging settings
+    level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'development' ? 'debug' : 'info'),
+    enableConsole: process.env.LOG_CONSOLE !== 'false',
+    enableFile: process.env.LOG_FILE !== 'false' || process.env.NODE_ENV === 'production',
+    
+    // File logging configuration
+    files: {
+      maxSize: process.env.LOG_MAX_SIZE || '20m',
+      maxFiles: process.env.LOG_MAX_FILES || '14d',
+      datePattern: 'YYYY-MM-DD',
+      zippedArchive: true,
+      directory: process.env.LOG_DIRECTORY || 'logs',
+    },
+    
+    // Error logging specific settings
+    error: {
+      maxSize: process.env.ERROR_LOG_MAX_SIZE || '50m',
+      maxFiles: process.env.ERROR_LOG_MAX_FILES || '30d',
+      level: 'error',
+      separateFile: true,
+    },
+    
+    // Security audit logging
+    security: {
+      enabled: process.env.SECURITY_LOGGING_ENABLED !== 'false',
+      maxSize: process.env.SECURITY_LOG_MAX_SIZE || '100m',
+      maxFiles: process.env.SECURITY_LOG_MAX_FILES || '90d',
+      separateFile: true,
+    },
+    
+    // Performance logging
+    performance: {
+      enabled: process.env.PERFORMANCE_LOGGING_ENABLED !== 'false',
+      maxSize: process.env.PERFORMANCE_LOG_MAX_SIZE || '50m',
+      maxFiles: process.env.PERFORMANCE_LOG_MAX_FILES || '30d',
+      slowQueryThreshold: parseInt(process.env.SLOW_QUERY_THRESHOLD || '1000', 10), // 1 second
+      slowRequestThreshold: parseInt(process.env.SLOW_REQUEST_THRESHOLD || '2000', 10), // 2 seconds
+      separateFile: process.env.NODE_ENV === 'production',
+    },
+    
+    // Request/Response logging
+    requests: {
+      enabled: process.env.REQUEST_LOGGING_ENABLED !== 'false',
+      skipPaths: (process.env.LOG_SKIP_PATHS || '/health,/favicon.ico,/robots.txt').split(','),
+      skipUserAgents: (process.env.LOG_SKIP_USER_AGENTS || 'kube-probe,health-check').split(','),
+      logHeaders: process.env.LOG_HEADERS !== 'false',
+      logBody: process.env.LOG_REQUEST_BODY === 'true',
+      maxBodySize: parseInt(process.env.LOG_MAX_BODY_SIZE || '1024', 10), // 1KB
+    },
+    
+    // Business logic logging
+    business: {
+      enabled: process.env.BUSINESS_LOGGING_ENABLED !== 'false',
+      trackUserActions: process.env.TRACK_USER_ACTIONS !== 'false',
+      trackPropertyOperations: process.env.TRACK_PROPERTY_OPS !== 'false',
+      trackInquiries: process.env.TRACK_INQUIRIES !== 'false',
+      trackAppointments: process.env.TRACK_APPOINTMENTS !== 'false',
+    },
+    
+    // Database logging
+    database: {
+      enabled: process.env.DB_LOGGING_ENABLED !== 'false',
+      logQueries: process.env.LOG_DB_QUERIES === 'true',
+      logSlowQueries: process.env.LOG_SLOW_QUERIES !== 'false',
+      logConnections: process.env.LOG_DB_CONNECTIONS !== 'false',
+      logErrors: process.env.LOG_DB_ERRORS !== 'false',
+    },
+    
+    // Cache logging
+    cache: {
+      enabled: process.env.CACHE_LOGGING_ENABLED !== 'false',
+      logHitMiss: process.env.LOG_CACHE_HIT_MISS !== 'false',
+      logOperations: process.env.LOG_CACHE_OPS === 'true',
+      logErrors: process.env.LOG_CACHE_ERRORS !== 'false',
+    },
+    
+    // External API logging
+    externalApis: {
+      enabled: process.env.EXTERNAL_API_LOGGING_ENABLED !== 'false',
+      logCalls: process.env.LOG_API_CALLS !== 'false',
+      logErrors: process.env.LOG_API_ERRORS !== 'false',
+      logPerformance: process.env.LOG_API_PERFORMANCE !== 'false',
+    },
+    
+    // Sensitive data filtering
+    sanitization: {
+      enabled: process.env.LOG_SANITIZATION !== 'false',
+      sensitiveFields: (process.env.SENSITIVE_FIELDS || 'password,token,secret,key,authorization,cookie,session,jwt,auth,credential,email,phone,cpf,rg,passport').split(','),
+      maskLength: parseInt(process.env.MASK_LENGTH || '4', 10),
+      replaceWith: process.env.MASK_REPLACE_WITH || '[REDACTED]',
+    },
+    
+    // Monitoring and alerting
+    monitoring: {
+      enabled: process.env.LOG_MONITORING_ENABLED !== 'false',
+      errorThreshold: parseInt(process.env.ERROR_THRESHOLD || '10', 10), // errors per minute
+      warningThreshold: parseInt(process.env.WARNING_THRESHOLD || '50', 10), // warnings per minute
+      performanceThreshold: parseInt(process.env.PERF_THRESHOLD || '2000', 10), // 2 seconds
+      healthCheckInterval: parseInt(process.env.HEALTH_CHECK_INTERVAL || '60000', 10), // 1 minute
+    },
+    
+    // Environment-specific settings
+    environments: {
+      development: {
+        level: 'debug',
+        enableConsole: true,
+        enableFile: false,
+        colorize: true,
+        prettyPrint: true,
+      },
+      production: {
+        level: 'info',
+        enableConsole: false,
+        enableFile: true,
+        colorize: false,
+        prettyPrint: false,
+        enableMetrics: true,
+        enableAlerting: true,
+      },
+      test: {
+        level: 'error',
+        enableConsole: false,
+        enableFile: false,
+      },
+    },
+  },
+
   // Development flags
   isDevelopment: process.env.NODE_ENV === 'development',
   isProduction: process.env.NODE_ENV === 'production',
