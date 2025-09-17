@@ -1,11 +1,16 @@
 import { MailService } from '@sendgrid/mail';
 
-if (!process.env.SENDGRID_API_KEY) {
-  throw new Error("SENDGRID_API_KEY environment variable must be set");
-}
+const hasEmailService = !!process.env.SENDGRID_API_KEY;
 
-const mailService = new MailService();
-mailService.setApiKey(process.env.SENDGRID_API_KEY!);
+let mailService: MailService | null = null;
+
+if (hasEmailService) {
+  mailService = new MailService();
+  mailService.setApiKey(process.env.SENDGRID_API_KEY!);
+  console.log('Email service initialized with SendGrid');
+} else {
+  console.log('Email service disabled - SENDGRID_API_KEY not provided');
+}
 
 interface EmailParams {
   to: string;
@@ -16,6 +21,11 @@ interface EmailParams {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
+  if (!mailService) {
+    console.log(`Email service not available - would have sent email to ${params.to}: ${params.subject}`);
+    return false; // Email service not available
+  }
+
   try {
     // Try with verified domain first, fallback to default
     const fromEmail = params.from === 'noreply@premierproperties.com' 
