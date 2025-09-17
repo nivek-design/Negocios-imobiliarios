@@ -12,7 +12,8 @@ import {
   RegisterRequest, 
   CreateAdminUserRequest, 
   CreateAgentUserRequest,
-  RegisterAgentRequest
+  RegisterAgentRequest,
+  RegistrationRejectionRequest
 } from './auth.validators';
 
 /**
@@ -223,5 +224,72 @@ export class AuthController {
     }
 
     sendCreated(res, result.data);
+  });
+
+  /**
+   * GET /api/auth/admin/pending-registrations
+   * Get all pending user registrations (super admin only)
+   */
+  getPendingRegistrations = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const result = await this.authService.getPendingRegistrations();
+    
+    if (!result.success) {
+      return res.status(result.statusCode || 500).json({
+        success: false,
+        message: result.error,
+      });
+    }
+
+    sendSuccess(res, {
+      users: result.data.users,
+      message: result.data.message,
+    });
+  });
+
+  /**
+   * POST /api/auth/admin/approve-registration/:id
+   * Approve pending user registration (super admin only)
+   */
+  approveRegistration = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { id } = req.params;
+    const adminId = req.user.id;
+    
+    const result = await this.authService.approveRegistration(id, adminId);
+    
+    if (!result.success) {
+      return res.status(result.statusCode || 400).json({
+        success: false,
+        message: result.error,
+      });
+    }
+
+    sendSuccess(res, {
+      user: result.data.user,
+      message: result.data.message,
+    });
+  });
+
+  /**
+   * POST /api/auth/admin/reject-registration/:id
+   * Reject pending user registration (super admin only)
+   */
+  rejectRegistration = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { id } = req.params;
+    const adminId = req.user.id;
+    const data: RegistrationRejectionRequest = req.body;
+    
+    const result = await this.authService.rejectRegistration(id, adminId, data);
+    
+    if (!result.success) {
+      return res.status(result.statusCode || 400).json({
+        success: false,
+        message: result.error,
+      });
+    }
+
+    sendSuccess(res, {
+      user: result.data.user,
+      message: result.data.message,
+    });
   });
 }

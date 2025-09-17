@@ -13,7 +13,8 @@ import {
   RegisterRequest, 
   CreateAdminUserRequest, 
   CreateAgentUserRequest,
-  RegisterAgentRequest 
+  RegisterAgentRequest,
+  RegistrationRejectionRequest
 } from './auth.validators';
 
 /**
@@ -321,6 +322,164 @@ export class AuthService {
         success: false,
         error: error.message || 'Erro ao criar corretor',
         statusCode: 400,
+      };
+    }
+  }
+
+  /**
+   * Get all pending user registrations (super admin only)
+   */
+  async getPendingRegistrations(): Promise<ServiceResult<{
+    users: any[];
+    message: string;
+  }>> {
+    try {
+      const result = await storage.getUsersByRegistrationStatus('pending');
+      
+      // Return simplified user data for admin review
+      const users = result.data.map(user => ({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        createdAt: user.createdAt,
+        profileImageUrl: user.profileImageUrl,
+      }));
+
+      return {
+        success: true,
+        data: {
+          users,
+          message: `${users.length} cadastros pendentes encontrados`,
+        },
+      };
+    } catch (error: any) {
+      console.error("Auth service getPendingRegistrations error:", error);
+      return {
+        success: false,
+        error: 'Erro ao buscar cadastros pendentes',
+        statusCode: 500,
+      };
+    }
+  }
+
+  /**
+   * Approve pending user registration (super admin only)
+   */
+  async approveRegistration(id: string, adminId: string): Promise<ServiceResult<{
+    user: any;
+    message: string;
+  }>> {
+    try {
+      // Check if user exists and is pending
+      const existingUser = await storage.getUser(id);
+      
+      if (!existingUser) {
+        return {
+          success: false,
+          error: 'Usuário não encontrado',
+          statusCode: 404,
+        };
+      }
+
+      if (existingUser.registrationStatus !== 'pending') {
+        return {
+          success: false,
+          error: 'Este cadastro não está pendente de aprovação',
+          statusCode: 400,
+        };
+      }
+
+      // Approve the registration
+      const approvedUser = await storage.updateUserRegistrationStatus(id, 'approved', adminId);
+      
+      console.log(`Registration approved for user ${approvedUser.email} by admin ${adminId}`);
+
+      return {
+        success: true,
+        data: {
+          user: {
+            id: approvedUser.id,
+            email: approvedUser.email,
+            firstName: approvedUser.firstName,
+            lastName: approvedUser.lastName,
+            role: approvedUser.role,
+            registrationStatus: approvedUser.registrationStatus,
+            approvedAt: approvedUser.approvedAt,
+          },
+          message: `Cadastro de ${approvedUser.firstName} ${approvedUser.lastName} aprovado com sucesso`,
+        },
+      };
+    } catch (error: any) {
+      console.error("Auth service approveRegistration error:", error);
+      return {
+        success: false,
+        error: error.message || 'Erro ao aprovar cadastro',
+        statusCode: 500,
+      };
+    }
+  }
+
+  /**
+   * Reject pending user registration (super admin only)
+   */
+  async rejectRegistration(id: string, adminId: string, data: RegistrationRejectionRequest): Promise<ServiceResult<{
+    user: any;
+    message: string;
+  }>> {
+    try {
+      // Check if user exists and is pending
+      const existingUser = await storage.getUser(id);
+      
+      if (!existingUser) {
+        return {
+          success: false,
+          error: 'Usuário não encontrado',
+          statusCode: 404,
+        };
+      }
+
+      if (existingUser.registrationStatus !== 'pending') {
+        return {
+          success: false,
+          error: 'Este cadastro não está pendente de aprovação',
+          statusCode: 400,
+        };
+      }
+
+      // Reject the registration
+      const rejectedUser = await storage.updateUserRegistrationStatus(
+        id, 
+        'rejected', 
+        adminId, 
+        data.rejectionReason
+      );
+      
+      console.log(`Registration rejected for user ${rejectedUser.email} by admin ${adminId}: ${data.rejectionReason}`);
+
+      return {
+        success: true,
+        data: {
+          user: {
+            id: rejectedUser.id,
+            email: rejectedUser.email,
+            firstName: rejectedUser.firstName,
+            lastName: rejectedUser.lastName,
+            role: rejectedUser.role,
+            registrationStatus: rejectedUser.registrationStatus,
+            rejectedAt: rejectedUser.rejectedAt,
+            rejectionReason: rejectedUser.rejectionReason,
+          },
+          message: `Cadastro de ${rejectedUser.firstName} ${rejectedUser.lastName} rejeitado`,
+        },
+      };
+    } catch (error: any) {
+      console.error("Auth service rejectRegistration error:", error);
+      return {
+        success: false,
+        error: error.message || 'Erro ao rejeitar cadastro',
+        statusCode: 500,
       };
     }
   }

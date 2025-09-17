@@ -58,3 +58,12 @@ export const registerAgentSchema = insertUserSchema.required({
 });
 
 export type RegisterAgentRequest = z.infer<typeof registerAgentSchema>;
+
+// Registration management validation schemas for admin endpoints
+export const registrationRejectionSchema = z.object({
+  rejectionReason: z.string()
+    .min(10, 'Motivo da rejeição deve ter pelo menos 10 caracteres')
+    .max(500, 'Motivo da rejeição não pode exceder 500 caracteres'),
+});
+
+export type RegistrationRejectionRequest = z.infer<typeof registrationRejectionSchema>;

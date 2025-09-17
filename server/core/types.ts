@@ -254,6 +254,7 @@ export const UserRoles = {
   CLIENT: 'client',
   AGENT: 'agent',
   ADMIN: 'admin',
+  SUPER_ADMIN: 'super_admin',
 } as const;
 
 export type UserRole = typeof UserRoles[keyof typeof UserRoles];

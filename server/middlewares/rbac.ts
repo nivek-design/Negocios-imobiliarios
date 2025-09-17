@@ -162,6 +162,33 @@ export const requireAdmin = asyncHandler(async (req: Request, res: Response, nex
 });
 
 /**
+ * SUPER ADMIN-ONLY ACCESS MIDDLEWARE
+ * Requires user to be a super admin
+ */
+export const requireSuperAdmin = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  // First ensure user is authenticated
+  await new Promise<void>((resolve, reject) => {
+    requireAuth(req, res, (err?: Error) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+
+  const user = (req as AuthenticatedRequest).user;
+  const requiredRoles = [UserRoles.SUPER_ADMIN];
+  const hasAccess = checkUserRole(user, requiredRoles);
+  
+  // Log authorization event
+  logAuthorizationEvent(req, user, requiredRoles, hasAccess, 'requireSuperAdmin');
+  
+  if (!hasAccess) {
+    throw new AuthorizationError('Acesso negado. Apenas super administradores.');
+  }
+  
+  next();
+});
+
+/**
  * CLIENT ACCESS MIDDLEWARE
  * Requires user to be a client (for client-specific features)
  */

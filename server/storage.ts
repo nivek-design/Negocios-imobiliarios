@@ -142,7 +142,9 @@ export interface IStorage {
   // User operations
   getUser(id: string, options?: SoftDeleteOptions): Promise<User | undefined>;
   getUsers(pagination?: PaginationOptions, options?: SoftDeleteOptions): Promise<PaginatedResponse<User>>;
+  getUsersByRegistrationStatus(status: 'pending' | 'approved' | 'rejected', pagination?: PaginationOptions, options?: SoftDeleteOptions): Promise<PaginatedResponse<User>>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUserRegistrationStatus(id: string, status: 'pending' | 'approved' | 'rejected', adminId: string, rejectionReason?: string): Promise<User>;
   softDeleteUser(id: string): Promise<void>;
   restoreUser(id: string): Promise<User>;
   
@@ -326,6 +328,63 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return user;
     }, `restoreUser:${id}`);
+  }
+
+  async getUsersByRegistrationStatus(status: 'pending' | 'approved' | 'rejected', pagination?: PaginationOptions, options?: SoftDeleteOptions): Promise<PaginatedResponse<User>> {
+    return executeWithMetrics(async () => {
+      const conditions = [eq(users.registrationStatus, status), applySoftDeleteFilter(options)];
+
+      // Get total count
+      const [countResult] = await db
+        .select({ count: count() })
+        .from(users)
+        .where(and(...conditions));
+      const total = Number(countResult.count);
+
+      // Get paginated results
+      let query = db
+        .select()
+        .from(users)
+        .where(and(...conditions))
+        .orderBy(desc(users.createdAt));
+
+      query = applyPagination(query, pagination);
+      const data = await query;
+
+      return createPaginatedResponse(data, pagination, total);
+    }, `getUsersByRegistrationStatus:${status}`);
+  }
+
+  async updateUserRegistrationStatus(id: string, status: 'pending' | 'approved' | 'rejected', adminId: string, rejectionReason?: string): Promise<User> {
+    return executeWithMetrics(async () => {
+      const updateData: any = {
+        registrationStatus: status,
+        updatedAt: new Date(),
+      };
+
+      if (status === 'approved') {
+        updateData.approvedBy = adminId;
+        updateData.approvedAt = new Date();
+        updateData.isActive = true;
+        // Clear rejection fields if previously rejected
+        updateData.rejectedAt = null;
+        updateData.rejectionReason = null;
+      } else if (status === 'rejected') {
+        updateData.rejectedAt = new Date();
+        updateData.rejectionReason = rejectionReason;
+        updateData.isActive = false;
+        // Clear approval fields if previously approved
+        updateData.approvedBy = null;
+        updateData.approvedAt = null;
+      }
+
+      const [user] = await db
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, id))
+        .returning();
+      return user;
+    }, `updateUserRegistrationStatus:${id}`);
   }
 
   // ==================== PROPERTY OPERATIONS ====================

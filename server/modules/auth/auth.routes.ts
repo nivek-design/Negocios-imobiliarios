@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { AuthController } from './auth.controller';
 import { validateBody } from '../../middlewares/validate';
-import { requireAdmin } from '../../middlewares/rbac';
+import { requireAdmin, requireSuperAdmin } from '../../middlewares/rbac';
 import { 
   loginSchema, 
   registerSchema, 
   createAdminUserSchema, 
   createAgentUserSchema,
-  registerAgentSchema
+  registerAgentSchema,
+  registrationRejectionSchema
 } from './auth.validators';
 
 /**
@@ -36,6 +37,23 @@ router.post('/admin/create-agent',
   requireAdmin, 
   validateBody(createAgentUserSchema), 
   authController.createAgentUser
+);
+
+// Super Admin-only registration management routes
+router.get('/admin/pending-registrations',
+  requireSuperAdmin,
+  authController.getPendingRegistrations
+);
+
+router.post('/admin/approve-registration/:id',
+  requireSuperAdmin,
+  authController.approveRegistration
+);
+
+router.post('/admin/reject-registration/:id',
+  requireSuperAdmin,
+  validateBody(registrationRejectionSchema),
+  authController.rejectRegistration
 );
 
 export { router as authRoutes };
