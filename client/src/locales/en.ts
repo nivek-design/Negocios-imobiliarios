@@ -174,6 +174,27 @@ export default {
   'common.noResults': 'No results found',
   'common.tryAdjustFilters': 'Try adjusting your filters or search terms.',
 
+  // Login/Registration Tabs
+  'loginModal.title': 'Agent Portal',
+  'loginModal.description': 'Login or register to access the property management system',
+  'loginModal.tabLogin': 'Login',
+  'loginModal.tabRegister': 'Register',
+  'loginModal.loginTitle': 'Agent Login',
+  'loginModal.loginDescription': 'Enter your credentials to access the system',
+  'loginModal.loginEmail': 'Email',
+  'loginModal.loginPassword': 'Password',
+  'loginModal.loginEmailPlaceholder': 'your@email.com',
+  'loginModal.loginPasswordPlaceholder': 'Your password',
+  'loginModal.loginCancel': 'Cancel',
+  'loginModal.loginSubmit': 'Login',
+  'loginModal.loginSubmitting': 'Logging in...',
+  'loginModal.loginSuccess': 'Login successful!',
+  'loginModal.loginRedirecting': 'Redirecting to Replit authentication...',
+  'loginModal.loginError': 'Login Error',
+  'loginModal.loginInvalidCredentials': 'Invalid credentials. Please try again.',
+  'loginModal.loginRequiredFields': 'Required Fields',
+  'loginModal.loginFillFields': 'Please fill in email and password.',
+
   // Agent Registration
   'agentRegister.title': 'Agent Registration',
   'agentRegister.subtitle': 'Register to become a Kalross agent',

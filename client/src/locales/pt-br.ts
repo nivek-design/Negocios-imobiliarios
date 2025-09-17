@@ -190,6 +190,27 @@ export default {
   "common.noResults": "Nenhum resultado encontrado",
   "common.tryAdjustFilters": "Tente ajustar seus filtros ou termos de busca.",
 
+  // Login/Registration Tabs
+  "loginModal.title": "Portal do Corretor",
+  "loginModal.description": "Entre ou registre-se para acessar o sistema de gestão de propriedades",
+  "loginModal.tabLogin": "Login",
+  "loginModal.tabRegister": "Cadastro",
+  "loginModal.loginTitle": "Login do Corretor",
+  "loginModal.loginDescription": "Entre com suas credenciais para acessar o sistema",
+  "loginModal.loginEmail": "Email",
+  "loginModal.loginPassword": "Senha",
+  "loginModal.loginEmailPlaceholder": "seu@email.com",
+  "loginModal.loginPasswordPlaceholder": "Sua senha",
+  "loginModal.loginCancel": "Cancelar",
+  "loginModal.loginSubmit": "Entrar",
+  "loginModal.loginSubmitting": "Entrando...",
+  "loginModal.loginSuccess": "Login realizado com sucesso!",
+  "loginModal.loginRedirecting": "Redirecionando para autenticação do Replit...",
+  "loginModal.loginError": "Erro no login",
+  "loginModal.loginInvalidCredentials": "Credenciais inválidas. Tente novamente.",
+  "loginModal.loginRequiredFields": "Campos obrigatórios",
+  "loginModal.loginFillFields": "Por favor, preencha email e senha.",
+
   // Agent Registration
   "agentRegister.title": "Cadastro de Corretor",
   "agentRegister.subtitle": "Registre-se para se tornar um corretor da Kalross",

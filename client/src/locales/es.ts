@@ -174,6 +174,27 @@ export default {
   'common.noResults': 'No se encontraron resultados',
   'common.tryAdjustFilters': 'Intenta ajustar tus filtros o términos de búsqueda.',
 
+  // Login/Registration Tabs
+  'loginModal.title': 'Portal del Agente',
+  'loginModal.description': 'Inicia sesión o regístrate para acceder al sistema de gestión de propiedades',
+  'loginModal.tabLogin': 'Iniciar Sesión',
+  'loginModal.tabRegister': 'Registro',
+  'loginModal.loginTitle': 'Login del Agente',
+  'loginModal.loginDescription': 'Ingresa tus credenciales para acceder al sistema',
+  'loginModal.loginEmail': 'Email',
+  'loginModal.loginPassword': 'Contraseña',
+  'loginModal.loginEmailPlaceholder': 'tu@email.com',
+  'loginModal.loginPasswordPlaceholder': 'Tu contraseña',
+  'loginModal.loginCancel': 'Cancelar',
+  'loginModal.loginSubmit': 'Iniciar Sesión',
+  'loginModal.loginSubmitting': 'Iniciando sesión...',
+  'loginModal.loginSuccess': '¡Inicio de sesión exitoso!',
+  'loginModal.loginRedirecting': 'Redirigiendo a autenticación de Replit...',
+  'loginModal.loginError': 'Error de Login',
+  'loginModal.loginInvalidCredentials': 'Credenciales inválidas. Inténtalo de nuevo.',
+  'loginModal.loginRequiredFields': 'Campos Requeridos',
+  'loginModal.loginFillFields': 'Por favor completa email y contraseña.',
+
   // Agent Registration
   'agentRegister.title': 'Registro de Agente',
   'agentRegister.subtitle': 'Regístrate para convertirte en agente de Kalross',
