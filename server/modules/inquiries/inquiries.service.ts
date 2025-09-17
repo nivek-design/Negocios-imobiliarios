@@ -69,10 +69,13 @@ export class InquiriesService {
    */
   async getInquiriesByAgent(agentId: string): Promise<ServiceResult<any[]>> {
     try {
-      const inquiries = await storage.getInquiriesByAgent(agentId);
+      const result = await storage.getInquiriesByAgent(agentId);
+      // Extract data array from PaginatedResponse for backward compatibility
+      const inquiries = result.data || [];
       return {
         success: true,
         data: inquiries,
+        pagination: result.pagination, // Include pagination metadata
       };
     } catch (error: any) {
       console.error("Inquiries service getInquiriesByAgent error:", error);
@@ -108,10 +111,13 @@ export class InquiriesService {
         };
       }
 
-      const inquiries = await storage.getInquiriesForProperty(propertyId);
+      const result = await storage.getInquiriesForProperty(propertyId);
+      // Extract data array from PaginatedResponse for backward compatibility
+      const inquiries = result.data || [];
       return {
         success: true,
         data: inquiries,
+        pagination: result.pagination, // Include pagination metadata
       };
     } catch (error: any) {
       console.error("Inquiries service getInquiriesForProperty error:", error);

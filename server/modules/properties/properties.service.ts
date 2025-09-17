@@ -29,10 +29,13 @@ export class PropertiesService {
    */
   async getProperties(filters: PropertyFiltersRequest): Promise<ServiceResult<any[]>> {
     try {
-      const properties = await storage.getProperties(filters);
+      const result = await storage.getProperties(filters);
+      // Extract data array from PaginatedResponse for backward compatibility
+      const properties = result.data || [];
       return {
         success: true,
         data: properties,
+        pagination: result.pagination, // Include pagination metadata
       };
     } catch (error: any) {
       console.error("Properties service getProperties error:", error);
@@ -211,10 +214,13 @@ export class PropertiesService {
    */
   async getPropertiesByAgent(agentId: string): Promise<ServiceResult<any[]>> {
     try {
-      const properties = await storage.getPropertiesByAgent(agentId);
+      const result = await storage.getPropertiesByAgent(agentId);
+      // Extract data array from PaginatedResponse for backward compatibility
+      const properties = result.data || [];
       return {
         success: true,
         data: properties,
+        pagination: result.pagination, // Include pagination metadata
       };
     } catch (error: any) {
       console.error("Properties service getPropertiesByAgent error:", error);

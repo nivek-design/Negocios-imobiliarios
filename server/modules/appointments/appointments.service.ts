@@ -86,10 +86,13 @@ export class AppointmentsService {
    */
   async getAppointmentsByAgent(agentId: string): Promise<ServiceResult<any[]>> {
     try {
-      const appointments = await storage.getAppointmentsByAgent(agentId);
+      const result = await storage.getAppointmentsByAgent(agentId);
+      // Extract data array from PaginatedResponse for backward compatibility
+      const appointments = result.data || [];
       return {
         success: true,
         data: appointments,
+        pagination: result.pagination, // Include pagination metadata
       };
     } catch (error: any) {
       console.error("Appointments service getAppointmentsByAgent error:", error);
@@ -125,10 +128,13 @@ export class AppointmentsService {
         };
       }
 
-      const appointments = await storage.getAppointmentsByProperty(propertyId);
+      const result = await storage.getAppointmentsByProperty(propertyId);
+      // Extract data array from PaginatedResponse for backward compatibility
+      const appointments = result.data || [];
       return {
         success: true,
         data: appointments,
+        pagination: result.pagination, // Include pagination metadata
       };
     } catch (error: any) {
       console.error("Appointments service getAppointmentsByProperty error:", error);
