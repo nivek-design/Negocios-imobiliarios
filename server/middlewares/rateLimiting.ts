@@ -1,4 +1,4 @@
-import rateLimit, { type RateLimitRequestHandler } from 'express-rate-limit';
+import rateLimit, { type RateLimitRequestHandler, ipKeyGenerator } from 'express-rate-limit';
 import { type Request, type Response, type NextFunction } from 'express';
 import { config } from '../core/config';
 import { AppError } from '../core/errors';
@@ -126,10 +126,10 @@ export const globalRateLimit: RateLimitRequestHandler = rateLimit({
   standardHeaders: true, // Add standard rate limiting headers
   legacyHeaders: false,
   keyGenerator: (req: Request): string => {
-    // Use secure IP-based key generation that properly handles IPv6
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    // Use IPv6-safe key generation
+    const ipKey = ipKeyGenerator(req);
     const userId = (req as any).user?.id || 'anonymous';
-    return `global:${ip}:${userId}`;
+    return `global:${ipKey}:${userId}`;
   },
   skip: skipRateLimiting,
   handler: (req, res) => {
@@ -158,10 +158,10 @@ export const authRateLimit: RateLimitRequestHandler = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req: Request): string => {
-    // Use secure IP-based key generation that properly handles IPv6
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    // Use IPv6-safe key generation
+    const ipKey = ipKeyGenerator(req);
     const userId = (req as any).user?.id || 'anonymous';
-    return `auth:${ip}:${userId}`;
+    return `auth:${ipKey}:${userId}`;
   },
   skip: (req) => {
     // Never skip auth rate limiting except for whitelisted IPs
@@ -207,10 +207,10 @@ export const propertiesRateLimit: RateLimitRequestHandler = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req: Request): string => {
-    // Use secure IP-based key generation that properly handles IPv6
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    // Use IPv6-safe key generation
+    const ipKey = ipKeyGenerator(req);
     const userId = (req as any).user?.id || 'anonymous';
-    return `properties:${ip}:${userId}`;
+    return `properties:${ipKey}:${userId}`;
   },
   skip: skipRateLimiting,
   handler: (req, res) => {
@@ -233,10 +233,10 @@ export const inquiriesRateLimit: RateLimitRequestHandler = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req: Request): string => {
-    // Use secure IP-based key generation that properly handles IPv6
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    // Use IPv6-safe key generation
+    const ipKey = ipKeyGenerator(req);
     const userId = (req as any).user?.id || 'anonymous';
-    return `inquiries:${ip}:${userId}`;
+    return `inquiries:${ipKey}:${userId}`;
   },
   skip: skipRateLimiting,
   handler: (req, res) => {
@@ -268,10 +268,10 @@ export const uploadsRateLimit: RateLimitRequestHandler = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req: Request): string => {
-    // Use secure IP-based key generation that properly handles IPv6
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    // Use IPv6-safe key generation
+    const ipKey = ipKeyGenerator(req);
     const userId = (req as any).user?.id || 'anonymous';
-    return `uploads:${ip}:${userId}`;
+    return `uploads:${ipKey}:${userId}`;
   },
   skip: skipRateLimiting,
   handler: (req, res) => {
@@ -310,10 +310,10 @@ export const createCustomRateLimit = (
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req: Request): string => {
-      // Use secure IP-based key generation that properly handles IPv6
-      const ip = req.ip || req.connection.remoteAddress || 'unknown';
+      // Use IPv6-safe key generation
+      const ipKey = ipKeyGenerator(req);
       const userId = (req as any).user?.id || 'anonymous';
-      return `${type}:${ip}:${userId}`;
+      return `${type}:${ipKey}:${userId}`;
     },
     skip: skipRateLimiting,
     handler: (req, res) => {

@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getPropertyImageUrl, handleImageError } from "@/lib/imageUtils";
+import { getPropertyImageUrl, optimizeImageUrl, generateImageSizes, preloadImages } from "@/lib/imageUtils";
+import { GalleryImage } from "@/components/ui/lazy-image";
 
 interface ImageGalleryProps {
   images: string[];
@@ -14,17 +15,45 @@ interface ImageGalleryProps {
 export default function ImageGallery({ images, title, isOpen, onClose, initialIndex = 0 }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
+  // Memoize optimized images for performance
+  const optimizedImages = useMemo(() => {
+    return images.map(img => ({
+      full: optimizeImageUrl(img, { width: 1200, height: 800, quality: 90 }),
+      thumbnail: optimizeImageUrl(img, { width: 100, height: 100, quality: 70 })
+    }));
+  }, [images]);
+
+  // Preload adjacent images for smooth navigation
+  const preloadAdjacentImages = useCallback((index: number) => {
+    const imagesToPreload = [];
+    const prevIndex = index === 0 ? images.length - 1 : index - 1;
+    const nextIndex = index === images.length - 1 ? 0 : index + 1;
+    
+    if (optimizedImages[prevIndex]) imagesToPreload.push(optimizedImages[prevIndex].full);
+    if (optimizedImages[nextIndex]) imagesToPreload.push(optimizedImages[nextIndex].full);
+    
+    preloadImages(imagesToPreload, true);
+  }, [images.length, optimizedImages]);
+
   if (!isOpen || !images || images.length === 0) {
     return null;
   }
 
-  const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  };
+  const goToPrevious = useCallback(() => {
+    setCurrentIndex((prev) => {
+      const newIndex = prev === 0 ? images.length - 1 : prev - 1;
+      preloadAdjacentImages(newIndex);
+      return newIndex;
+    });
+  }, [images.length, preloadAdjacentImages]);
 
-  const goToNext = () => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-  };
+  const goToNext = useCallback(() => {
+    setCurrentIndex((prev) => {
+      const newIndex = prev === images.length - 1 ? 0 : prev + 1;
+      preloadAdjacentImages(newIndex);
+      return newIndex;
+    });
+  }, [images.length, preloadAdjacentImages]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
@@ -81,11 +110,15 @@ export default function ImageGallery({ images, title, isOpen, onClose, initialIn
 
         {/* Main image */}
         <div className="flex items-center justify-center h-full">
-          <img
-            src={getPropertyImageUrl(images[currentIndex])}
+          <GalleryImage
+            src={optimizedImages[currentIndex]?.full || getPropertyImageUrl(images[currentIndex])}
             alt={`${title} - Image ${currentIndex + 1}`}
-            onError={handleImageError}
             className="max-w-full max-h-full object-contain"
+            width="100%"
+            height="100%"
+            priority={true}
+            isActive={true}
+            sizes={generateImageSizes(1200)}
             data-testid={`gallery-image-${currentIndex}`}
           />
         </div>
@@ -103,17 +136,24 @@ export default function ImageGallery({ images, title, isOpen, onClose, initialIn
             {images.map((image, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`flex-shrink-0 w-16 h-16 rounded border-2 overflow-hidden ${
+                onClick={() => {
+                  setCurrentIndex(index);
+                  preloadAdjacentImages(index);
+                }}
+                className={`flex-shrink-0 w-16 h-16 rounded border-2 overflow-hidden transition-all duration-200 ${
                   index === currentIndex ? 'border-white' : 'border-transparent opacity-70 hover:opacity-100'
                 }`}
                 data-testid={`thumbnail-${index}`}
               >
-                <img
-                  src={getPropertyImageUrl(image)}
+                <GalleryImage
+                  src={optimizedImages[index]?.thumbnail || getPropertyImageUrl(image)}
                   alt={`${title} - Thumbnail ${index + 1}`}
-                  onError={handleImageError}
                   className="w-full h-full object-cover"
+                  width={64}
+                  height={64}
+                  priority={Math.abs(index - currentIndex) <= 2} // Preload nearby thumbnails
+                  aspectRatio={1}
+                  rootMargin="100px"
                 />
               </button>
             ))}

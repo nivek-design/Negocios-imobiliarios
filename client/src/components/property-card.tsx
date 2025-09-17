@@ -1,9 +1,12 @@
+import { memo, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Bed, Bath, Square, MapPin } from "lucide-react";
 import { Link } from "wouter";
 import { useI18n } from "@/contexts/I18nContext";
-import { getPropertyMainImage, handleImageError } from "@/lib/imageUtils";
+import { getPropertyMainImage, generateImageSizes, generateImageSrcSet, optimizeImageUrl } from "@/lib/imageUtils";
+import { PropertyImage } from "@/components/ui/lazy-image";
+import { useRenderMetrics } from "@/hooks/usePerformance";
 import type { Property } from "@shared/schema";
 
 interface PropertyCardProps {
@@ -11,18 +14,21 @@ interface PropertyCardProps {
   className?: string;
 }
 
-export default function PropertyCard({ property, className = "" }: PropertyCardProps) {
+function PropertyCard({ property, className = "" }: PropertyCardProps) {
   const { t } = useI18n();
-  const formatPrice = (price: string) => {
-    const num = parseFloat(price);
+  const getRenderInfo = useRenderMetrics(`PropertyCard-${property.id}`);
+
+  // Memoize expensive calculations
+  const formattedPrice = useMemo(() => {
+    const num = parseFloat(property.price);
     if (property.status === 'for_rent') {
       return `$${num.toLocaleString()}/mo`;
     }
     return `$${num.toLocaleString()}`;
-  };
+  }, [property.price, property.status]);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const statusBadge = useMemo(() => {
+    switch (property.status) {
       case 'for_sale':
         return <Badge className="bg-secondary text-secondary-foreground">{t('status.forSale')}</Badge>;
       case 'for_rent':
@@ -34,22 +40,46 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
       default:
         return null;
     }
-  };
+  }, [property.status, t]);
 
-  const mainImage = getPropertyMainImage(property.images);
+  // Memoize image processing
+  const imageData = useMemo(() => {
+    const mainImage = getPropertyMainImage(property.images);
+    return {
+      optimized: optimizeImageUrl(mainImage, { width: 400, height: 250, quality: 85 }),
+      sizes: generateImageSizes(400),
+      srcSet: generateImageSrcSet(mainImage, [300, 400, 600, 800]),
+      mainImage
+    };
+  }, [property.images]);
+
+  // Memoize click handlers
+  const handleFavoriteClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // TODO: Implement favorite functionality
+    console.log(`Toggle favorite for property ${property.id}`);
+  }, [property.id]);
 
   return (
     <div className={`property-card bg-card rounded-lg shadow-lg overflow-hidden border border-border ${className}`}>
       <div className="relative h-64 overflow-hidden">
-        <img 
-          src={mainImage} 
+        <PropertyImage
+          src={imageData.optimized}
+          images={property.images}
           alt={property.title}
-          onError={handleImageError}
+          width="100%"
+          height={256}
           className="property-image w-full h-full object-cover"
+          sizes={imageData.sizes}
+          srcSet={imageData.srcSet}
+          fallbackAspectRatio={16/10}
           data-testid={`img-property-${property.id}`}
+          rootMargin="50px"
+          loading="lazy"
         />
         <div className="absolute top-4 left-4">
-          {getStatusBadge(property.status)}
+          {statusBadge}
         </div>
         <div className="absolute top-4 right-4">
           <Button 
@@ -57,13 +87,14 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
             size="sm"
             className="bg-white/80 hover:bg-white text-foreground p-2 rounded-full"
             data-testid={`button-favorite-${property.id}`}
+            onClick={handleFavoriteClick}
           >
             <Heart className="w-4 h-4" />
           </Button>
         </div>
         <div className="absolute bottom-4 left-4">
           <Badge className="bg-primary text-primary-foreground text-lg font-bold px-3 py-1">
-            {formatPrice(property.price)}
+            {formattedPrice}
           </Badge>
         </div>
       </div>
@@ -110,3 +141,6 @@ export default function PropertyCard({ property, className = "" }: PropertyCardP
     </div>
   );
 }
+
+// Export memoized component for performance
+export default memo(PropertyCard);
