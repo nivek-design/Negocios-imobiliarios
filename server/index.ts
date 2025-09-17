@@ -1,10 +1,54 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes/index";
 import { setupVite, serveStatic, log } from "./vite";
+import { config } from "./core/config";
+import { 
+  securityHeaders, 
+  corsConfiguration, 
+  sanitizeInputs,
+  requestTimeout,
+  requestSizeLimit
+} from "./middlewares/security";
+import { 
+  globalRateLimit, 
+  ipBlockingMiddleware
+} from "./middlewares/rateLimiting";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// 🔒 TRUST PROXY CONFIGURATION - Critical for rate limiting security
+app.set('trust proxy', 1); // Trust first proxy (required for proper IP detection)
+
+// 🔒 SECURITY MIDDLEWARE - Applied before all other middleware
+// IP blocking (first line of defense)
+app.use(ipBlockingMiddleware);
+
+// Security headers (helmet)
+app.use(securityHeaders);
+
+// CORS configuration
+app.use(corsConfiguration);
+
+// Global rate limiting
+app.use(globalRateLimit);
+
+// Request timeout
+app.use(requestTimeout);
+
+// Request size limiting
+app.use(requestSizeLimit);
+
+// Body parsing with size limits
+app.use(express.json({ limit: config.security.limits.jsonBodyLimit }));
+app.use(express.urlencoded({ 
+  extended: false, 
+  limit: config.security.limits.urlEncodedLimit 
+}));
+
+// Input sanitization
+app.use(sanitizeInputs);
+
+// Note: SQL injection and path traversal protection are mounted on /api routes in routes/index.ts
 
 app.use((req, res, next) => {
   const start = Date.now();

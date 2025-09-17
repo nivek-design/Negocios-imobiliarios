@@ -2,6 +2,20 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "../replitAuth";
 import { errorHandler, notFoundHandler } from "../middlewares/error";
+import { 
+  authRateLimit,
+  propertiesRateLimit,
+  inquiriesRateLimit,
+  uploadsRateLimit,
+  rateLimitHealthCheck
+} from "../middlewares/rateLimiting";
+import {
+  sqlInjectionProtection,
+  pathTraversalProtection,
+  suspiciousActivityDetection,
+  securityHealthCheck
+} from "../middlewares/security";
+import { validationHealthCheck } from "../middlewares/validate";
 
 // Import all module routes
 import { authRoutes } from "../modules/auth";
@@ -51,42 +65,59 @@ import { configRoutes } from "../modules/config";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize Replit Auth (minimal setup for compatibility)
   await setupAuth(app);
+  
+  // 🔒 ADDITIONAL SECURITY MIDDLEWARE (applied to all API routes)
+  app.use("/api", sqlInjectionProtection);
+  app.use("/api", pathTraversalProtection);
+  app.use("/api", suspiciousActivityDetection);
+
+  // 🏥 SECURITY HEALTH CHECK ENDPOINTS (before main API routes)
+  app.get("/api/health/security", securityHealthCheck);
+  app.get("/api/health/rate-limiting", rateLimitHealthCheck);
+  app.get("/api/health/validation", validationHealthCheck);
 
   // Mount public object storage routes (must come before API routes)
-  app.use("/public-objects", publicObjectsRoutes);
-  app.use("/objects", protectedObjectsRoutes);
+  app.use("/public-objects", uploadsRateLimit, publicObjectsRoutes);
+  app.use("/objects", uploadsRateLimit, protectedObjectsRoutes);
 
-  // Mount API routes with /api prefix
-  app.use("/api/auth", authRoutes);
-  app.use("/api/properties", propertiesRoutes);
-  app.use("/api/inquiries", inquiriesRoutes);
+  // 🔒 MOUNT API ROUTES WITH SPECIFIC RATE LIMITING
+  // Authentication routes - strict rate limiting
+  app.use("/api/auth", authRateLimit, authRoutes);
+  
+  // Properties routes - moderate rate limiting
+  app.use("/api/properties", propertiesRateLimit, propertiesRoutes);
+  
+  // Inquiries routes - strict rate limiting (spam protection)
+  app.use("/api/inquiries", inquiriesRateLimit, inquiriesRoutes);
+  
+  // Other API routes with standard rate limiting
   app.use("/api/appointments", appointmentsRoutes);
-  app.use("/api/objects", objectsRoutes);
+  app.use("/api/objects", uploadsRateLimit, objectsRoutes);
   app.use("/api/config", configRoutes);
 
-  // Mount aggregated routes with specific path patterns
-  // Agent-specific routes
-  app.use("/api/agent/properties", agentPropertiesRoutes);
-  app.use("/api/agent/inquiries", agentInquiriesRoutes);
+  // Mount aggregated routes with specific path patterns and appropriate rate limiting
+  // Agent-specific routes - properties have moderate limits, inquiries strict
+  app.use("/api/agent/properties", propertiesRateLimit, agentPropertiesRoutes);
+  app.use("/api/agent/inquiries", inquiriesRateLimit, agentInquiriesRoutes);
   app.use("/api/agent/appointments", agentAppointmentsRoutes);
   app.use("/api/agent/metrics", agentMetricsRoutes);
 
   // User-specific routes
-  app.use("/api/user", userPropertiesRoutes);
+  app.use("/api/user", propertiesRateLimit, userPropertiesRoutes);
 
   // Property-related nested routes
-  app.use("/api/properties", propertyInquiriesRoutes);
+  app.use("/api/properties", inquiriesRateLimit, propertyInquiriesRoutes);
   app.use("/api/properties", propertyAppointmentsRoutes);
   app.use("/api/properties", propertyMetricsRoutes);
 
   // Agent availability routes
   app.use("/api/agents", agentAvailabilityRoutes);
 
-  // Admin routes
+  // Admin routes (no rate limiting for admin functions)
   app.use("/api/admin/metrics", adminMetricsRoutes);
 
-  // Legacy property images route (for compatibility)
-  app.use("/api/property-images", propertyImagesRoutes);
+  // Legacy property images route (for compatibility) - upload limits
+  app.use("/api/property-images", uploadsRateLimit, propertyImagesRoutes);
 
   // Cache health check endpoint
   const { cacheHealthCheck } = await import("../middlewares/cache");
