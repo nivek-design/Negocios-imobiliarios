@@ -420,6 +420,9 @@ export class HealthMonitor extends EventEmitter {
     this.healthStatus.timestamp = new Date().toISOString();
     this.healthStatus.uptime = Date.now() - this.startTime;
     
+    // Add to history
+    this.addToHistory(this.healthStatus);
+    
     // Log status changes
     if (previousStatus !== overallStatus) {
       this.logger.warn(`Application health status changed`, {
@@ -679,11 +682,15 @@ export class HealthMonitor extends EventEmitter {
   
   // Public methods
   
-  async getHealthStatus(): Promise<HealthStatus> {
+  getCurrentHealthStatus(): HealthStatus {
     return {
       ...this.healthStatus,
       checks: { ...this.healthStatus.checks }, // Return a copy
     };
+  }
+  
+  async getHealthStatus(): Promise<HealthStatus> {
+    return this.getCurrentHealthStatus();
   }
   
   async performManualHealthCheck(): Promise<HealthStatus> {
@@ -720,6 +727,41 @@ export class HealthMonitor extends EventEmitter {
     }
     
     return issues;
+  }
+  
+  // Health history tracking
+  private healthHistory: HealthStatus[] = [];
+  private readonly maxHistorySize = 100; // Keep last 100 health checks
+  
+  private addToHistory(status: HealthStatus): void {
+    this.healthHistory.push({
+      ...status,
+      checks: { ...status.checks }, // Deep copy
+    });
+    
+    // Maintain history size limit
+    if (this.healthHistory.length > this.maxHistorySize) {
+      this.healthHistory.shift();
+    }
+  }
+  
+  getHealthHistory(): HealthStatus[] {
+    return [...this.healthHistory]; // Return copy
+  }
+  
+  async checkDependencyHealth(dependencyName: string): Promise<HealthCheck | null> {
+    const dependency = this.dependencies.get(dependencyName);
+    if (!dependency) {
+      return null;
+    }
+    
+    try {
+      await this.runSingleHealthCheck(dependency);
+      return this.healthStatus.checks[dependencyName] || null;
+    } catch (error) {
+      this.logger.error(`Manual dependency health check failed: ${dependencyName}`, error);
+      return this.healthStatus.checks[dependencyName] || null;
+    }
   }
   
   // Cleanup method

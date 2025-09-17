@@ -25,6 +25,7 @@ const HelpCenter = lazy(() => import("@/pages/help-center"));
 const Contact = lazy(() => import("@/pages/contact"));
 const Privacy = lazy(() => import("@/pages/privacy"));
 const Terms = lazy(() => import("@/pages/terms"));
+const HealthDashboard = lazy(() => import("@/pages/health-dashboard"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 /**
@@ -148,6 +149,20 @@ function Router() {
             {() => (
               <ProtectedLazyRoute>
                 <AgentDashboard />
+              </ProtectedLazyRoute>
+            )}
+          </Route>
+          <Route path="/admin/health">
+            {() => (
+              <ProtectedLazyRoute>
+                <HealthDashboard />
+              </ProtectedLazyRoute>
+            )}
+          </Route>
+          <Route path="/admin/health-dashboard">
+            {() => (
+              <ProtectedLazyRoute>
+                <HealthDashboard />
               </ProtectedLazyRoute>
             )}
           </Route>

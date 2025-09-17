@@ -48,6 +48,9 @@ import {
 } from "../modules/objects";
 import { configRoutes } from "../modules/config";
 
+// Import observability routes
+import { observabilityRoutes } from "./observability";
+
 /**
  * MODULAR ROUTES AGGREGATOR
  * 
@@ -71,7 +74,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", pathTraversalProtection);
   app.use("/api", suspiciousActivityDetection);
 
-  // 🏥 SECURITY HEALTH CHECK ENDPOINTS (before main API routes)
+  // 🏥 HEALTH AND OBSERVABILITY ENDPOINTS (before main API routes)
+  app.use("/api", observabilityRoutes);
+  
+  // 🏥 SECURITY HEALTH CHECK ENDPOINTS (legacy - maintained for compatibility)
   app.get("/api/health/security", securityHealthCheck);
   app.get("/api/health/rate-limiting", rateLimitHealthCheck);
   app.get("/api/health/validation", validationHealthCheck);
