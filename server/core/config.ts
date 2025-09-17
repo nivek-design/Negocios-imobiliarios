@@ -47,6 +47,18 @@ export const config = {
     sessionSecret: process.env.SESSION_SECRET || 'premier-properties-session-secret',
   },
 
+  // Cache Configuration (Redis)
+  cache: {
+    enabled: process.env.REDIS_ENABLED === 'true' || process.env.NODE_ENV === 'production',
+    redisUrl: process.env.REDIS_URL || '',
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    password: process.env.REDIS_PASSWORD || '',
+    db: parseInt(process.env.REDIS_DB || '0', 10),
+    keyPrefix: process.env.REDIS_KEY_PREFIX || 'kalross',
+    defaultTTL: parseInt(process.env.REDIS_DEFAULT_TTL || '300', 10), // 5 minutes default
+  },
+
   // Development flags
   isDevelopment: process.env.NODE_ENV === 'development',
   isProduction: process.env.NODE_ENV === 'production',

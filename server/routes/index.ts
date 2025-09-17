@@ -88,6 +88,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Legacy property images route (for compatibility)
   app.use("/api/property-images", propertyImagesRoutes);
 
+  // Cache health check endpoint
+  const { cacheHealthCheck } = await import("../middlewares/cache");
+  app.get("/api/health/cache", cacheHealthCheck);
+
   // Error handling middleware (must be last)
   app.use(notFoundHandler);
   app.use(errorHandler);

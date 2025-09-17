@@ -3,6 +3,7 @@ import { MetricsController } from './metrics.controller';
 import { validateParams, commonParams } from '../../middlewares/validate';
 import { requireAuth } from '../../middlewares/auth';
 import { requireAdmin } from '../../middlewares/rbac';
+import { cache, cachePresets } from '../../middlewares/cache';
 
 /**
  * METRICS ROUTES
@@ -16,6 +17,7 @@ const metricsController = new MetricsController();
 export const agentMetricsRoutes = Router();
 agentMetricsRoutes.get('/', 
   requireAuth, 
+  cache(cachePresets.metrics),
   metricsController.getAgentMetrics
 );
 
@@ -24,6 +26,7 @@ export const propertyMetricsRoutes = Router();
 propertyMetricsRoutes.get('/:id/metrics', 
   validateParams(commonParams.id),
   requireAuth, 
+  cache(cachePresets.metrics),
   metricsController.getPropertyMetrics
 );
 
@@ -31,6 +34,7 @@ propertyMetricsRoutes.get('/:id/metrics',
 export const adminMetricsRoutes = Router();
 adminMetricsRoutes.get('/', 
   requireAdmin, 
+  cache(cachePresets.metrics),
   metricsController.getSystemMetrics
 );
 

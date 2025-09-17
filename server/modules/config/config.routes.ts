@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { ConfigController } from './config.controller';
+import { cache, cachePresets } from '../../middlewares/cache';
 
 /**
  * CONFIG ROUTES
@@ -10,7 +11,13 @@ const router = Router();
 const configController = new ConfigController();
 
 // Public configuration routes
-router.get('/', configController.getPublicConfig);
-router.get('/maps', configController.getMapsConfig);
+router.get('/', 
+  cache(cachePresets.config),
+  configController.getPublicConfig
+);
+router.get('/maps', 
+  cache(cachePresets.config),
+  configController.getMapsConfig
+);
 
 export { router as configRoutes };
