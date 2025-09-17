@@ -1,9 +1,9 @@
-modules = ["nodejs-20", "web", "postgresql-16"]
+modules = ["nodejs-20", "web"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
-channel = "stable-24_05"
+channel = "stable-25_05"
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -39,6 +39,7 @@ args = "npm run dev"
 waitForPort = 5000
 
 [agent]
+integrations = ["javascript_log_in_with_replit:1.0.0"]
 
 [objectStorage]
 defaultBucketID = "replit-objstore-9558bbd3-ef5f-47f8-8ae7-defba7f84897"
