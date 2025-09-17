@@ -6,7 +6,8 @@ import {
   loginSchema, 
   registerSchema, 
   createAdminUserSchema, 
-  createAgentUserSchema 
+  createAgentUserSchema,
+  registerAgentSchema
 } from './auth.validators';
 
 /**
@@ -20,6 +21,7 @@ const authController = new AuthController();
 // Public authentication routes
 router.post('/login', validateBody(loginSchema), authController.login);
 router.post('/register', validateBody(registerSchema), authController.register);
+router.post('/register-agent', validateBody(registerAgentSchema), authController.registerAgent);
 router.post('/logout', authController.logout);
 router.get('/user', authController.getUser);
 

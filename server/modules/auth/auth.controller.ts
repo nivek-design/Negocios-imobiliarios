@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { AuthService } from './auth.service';
 import { asyncHandler, sendSuccess, sendCreated } from '../../core/asyncHandler';
 import { clearAuthCookies, setAuthCookie } from '../../core/http';
-import { AuthenticatedRequest, OptionalAuthRequest } from '../../core/types';
+import { AuthenticatedRequest, OptionalAuthRequest, AuthenticatedUser, convertUserToAuthenticatedUser } from '../../core/types';
 import { config } from '../../core/config';
 import { storage } from '../../storage';
 import { AuthenticationError, ErrorMessages } from '../../core/errors';
@@ -11,7 +11,8 @@ import {
   LoginRequest, 
   RegisterRequest, 
   CreateAdminUserRequest, 
-  CreateAgentUserRequest 
+  CreateAgentUserRequest,
+  RegisterAgentRequest
 } from './auth.validators';
 
 /**
@@ -27,7 +28,7 @@ export class AuthController {
    * POST /api/auth/login
    * Authenticate user with email/password
    */
-  login = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
+  login = asyncHandler(async (req: any, res: Response) => {
     const data: LoginRequest = req.body;
     
     const result = await this.authService.login(data);
@@ -44,7 +45,7 @@ export class AuthController {
     
     // Store in session as fallback authentication method
     if (req.session) {
-      (req.session as any).user = result.data.user;
+      req.session.user = convertUserToAuthenticatedUser(result.data.user);
     }
     
     sendSuccess(res, {
@@ -59,7 +60,7 @@ export class AuthController {
    * POST /api/auth/register
    * Register new user account
    */
-  register = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
+  register = asyncHandler(async (req: any, res: Response) => {
     const data: RegisterRequest = req.body;
     
     const result = await this.authService.register(data);
@@ -78,17 +79,39 @@ export class AuthController {
   });
 
   /**
+   * POST /api/auth/register-agent
+   * Register agent with pending approval
+   */
+  registerAgent = asyncHandler(async (req: any, res: Response) => {
+    const data: RegisterAgentRequest = req.body;
+    
+    const result = await this.authService.registerAgent(data);
+    
+    if (!result.success) {
+      return res.status(result.statusCode || 400).json({
+        success: false,
+        message: result.error,
+      });
+    }
+
+    sendCreated(res, {
+      message: result.data.message,
+      user: result.data.user,
+    });
+  });
+
+  /**
    * POST /api/auth/logout
    * Sign out user and clear authentication
    */
-  logout = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
+  logout = asyncHandler(async (req: any, res: Response) => {
     const result = await this.authService.logout();
     
     // Clear authentication cookies
     clearAuthCookies(res);
     
     // Destroy session if exists
-    if (req.session?.user) {
+    if (req.session && 'user' in req.session) {
       req.session.destroy((err: Error | null) => {
         if (err) {
           console.error("Error destroying session:", err);
@@ -113,7 +136,7 @@ export class AuthController {
    * GET /api/auth/user  
    * Get current authenticated user
    */
-  getUser = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
+  getUser = asyncHandler(async (req: any, res: Response) => {
     // Check JWT token first
     const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.authToken;
     
@@ -144,7 +167,7 @@ export class AuthController {
     }
     
     // Check session-based auth
-    if (req.session?.user) {
+    if (req.session && 'user' in req.session && req.session.user) {
       return sendSuccess(res, req.session.user);
     }
     
@@ -166,8 +189,8 @@ export class AuthController {
    * POST /api/auth/admin/create-user
    * Create admin user (admin only)
    */
-  createAdminUser = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const authReq = req as AuthenticatedRequest;
+  createAdminUser = asyncHandler(async (req: any, res: Response) => {
+    const authReq = req;
     const data: CreateAdminUserRequest = authReq.body;
     
     const result = await this.authService.createAdminUser(data);
@@ -186,8 +209,8 @@ export class AuthController {
    * POST /api/auth/admin/create-agent
    * Create agent user (admin only)
    */
-  createAgentUser = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const authReq = req as AuthenticatedRequest;
+  createAgentUser = asyncHandler(async (req: any, res: Response) => {
+    const authReq = req;
     const data: CreateAgentUserRequest = authReq.body;
     
     const result = await this.authService.createAgentUser(data);

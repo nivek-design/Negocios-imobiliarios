@@ -1,17 +1,32 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodSchema, ZodType } from 'zod';
-import { Property } from '@shared/schema';
+import { Property, User } from '@shared/schema';
+import { Session, SessionData } from 'express-session';
 
 /**
  * Core Types for Premier Properties Backend
  * Defines common interfaces and types used throughout the application
  */
 
-// Branded types for better type safety
-export type PropertyId = string & { readonly __brand: unique symbol };
-export type UserId = string & { readonly __brand: unique symbol };
-export type InquiryId = string & { readonly __brand: unique symbol };
-export type AppointmentId = string & { readonly __brand: unique symbol };
+// Type aliases for better readability  
+export type PropertyId = string;
+export type UserId = string;
+export type InquiryId = string;
+export type AppointmentId = string;
+
+// Express module augmentation to resolve type conflicts
+declare module 'express' {
+  interface Request {
+    user?: AuthenticatedUser;
+  }
+}
+
+// Session extension to include user property
+declare module 'express-session' {
+  interface SessionData {
+    user?: AuthenticatedUser;
+  }
+}
 
 // Extended Request interface with user data
 export interface AuthenticatedRequest extends Request {
@@ -22,7 +37,7 @@ export interface AuthenticatedRequest extends Request {
 
 // Standardized user object across all auth methods
 export interface AuthenticatedUser {
-  id: UserId;
+  id: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -77,7 +92,7 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 
 // JWT Payload with strict typing
 export interface JWTPayload {
-  id: UserId;
+  id: string;
   email: string;
   role: 'client' | 'agent' | 'admin';
   firstName: string;
@@ -85,6 +100,29 @@ export interface JWTPayload {
   iat?: number;
   exp?: number;
   sessionId?: string;
+}
+
+// Type conversion utilities
+export function convertUserToAuthenticatedUser(user: User): AuthenticatedUser {
+  return {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
+    role: (user.role || 'client') as UserRole,
+    claims: { sub: user.id },
+  };
+}
+
+export function convertAuthUserToAuthenticatedUser(authUser: any): AuthenticatedUser {
+  return {
+    id: authUser.id,
+    email: authUser.email,
+    firstName: authUser.firstName || '',
+    lastName: authUser.lastName || '',
+    role: (authUser.role || 'client') as UserRole,
+    claims: { sub: authUser.id },
+  };
 }
 
 // Cookie options type
@@ -137,7 +175,7 @@ export interface PropertyParams {
 }
 
 export interface UserParams {
-  id: UserId;
+  id: string;
 }
 
 // Common query parameters

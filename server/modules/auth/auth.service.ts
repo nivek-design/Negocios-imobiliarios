@@ -12,7 +12,8 @@ import {
   LoginRequest, 
   RegisterRequest, 
   CreateAdminUserRequest, 
-  CreateAgentUserRequest 
+  CreateAgentUserRequest,
+  RegisterAgentRequest 
 } from './auth.validators';
 
 /**
@@ -112,6 +113,63 @@ export class AuthService {
       return {
         success: false,
         error: error.message || 'Erro ao criar conta',
+        statusCode: 400,
+      };
+    }
+  }
+
+  /**
+   * Register agent with pending approval
+   */
+  async registerAgent(data: RegisterAgentRequest): Promise<ServiceResult<{
+    user: any;
+    message: string;
+  }>> {
+    try {
+      // Create pending agent user
+      const userData = {
+        id: `agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        profileImageUrl: data.profileImageUrl || null,
+        role: 'agent' as const,
+        registrationStatus: 'pending' as const,
+        isActive: false,
+      };
+
+      const user = await storage.upsertUser(userData);
+      console.log(`Agent registration request created for ${data.email} with ID: ${user.id}`);
+
+      return {
+        success: true,
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role,
+            registrationStatus: user.registrationStatus,
+          },
+          message: "Solicitação de cadastro enviada com sucesso! Aguarde aprovação do administrador para acessar a plataforma.",
+        },
+      };
+    } catch (error: any) {
+      console.error("Auth service registerAgent error:", error);
+      
+      // Handle database constraint errors
+      if (error.message?.includes('duplicate key') || error.message?.includes('unique constraint')) {
+        return {
+          success: false,
+          error: 'Email já está em uso. Use outro email para o cadastro.',
+          statusCode: 409,
+        };
+      }
+      
+      return {
+        success: false,
+        error: error.message || 'Erro ao processar solicitação de cadastro',
         statusCode: 400,
       };
     }

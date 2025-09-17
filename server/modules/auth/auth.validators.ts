@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { commonValidations } from '../../middlewares/validate';
+import { insertUserSchema } from '@shared/schema';
 
 /**
  * AUTH VALIDATION SCHEMAS
@@ -45,3 +46,15 @@ export const createAgentUserSchema = z.object({
 });
 
 export type CreateAgentUserRequest = z.infer<typeof createAgentUserSchema>;
+
+// Agent registration validation (for public agent registration with pending approval)
+export const registerAgentSchema = insertUserSchema.required({
+  email: true,
+  firstName: true,
+  lastName: true,
+}).extend({
+  // Optional profile image URL
+  profileImageUrl: z.string().url('URL da imagem de perfil deve ser válida').optional(),
+});
+
+export type RegisterAgentRequest = z.infer<typeof registerAgentSchema>;
