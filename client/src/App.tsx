@@ -20,6 +20,7 @@ const Home = lazy(() => import("@/pages/home"));
 const PropertyDetail = lazy(() => import("@/pages/property-detail"));
 const AgentDashboard = lazy(() => import("@/pages/agent-dashboard"));
 const AdminLogin = lazy(() => import("@/pages/admin-login"));
+const AdminPendingRegistrations = lazy(() => import("@/components/admin-pending-registrations"));
 const Unauthorized = lazy(() => import("@/pages/unauthorized"));
 const HelpCenter = lazy(() => import("@/pages/help-center"));
 const Contact = lazy(() => import("@/pages/contact"));
@@ -114,7 +115,7 @@ function Router() {
           <Route path="/property/:id">
             {(params) => (
               <LazyRoute>
-                <PropertyDetail {...params} />
+                <PropertyDetail />
               </LazyRoute>
             )}
           </Route>
@@ -132,7 +133,7 @@ function Router() {
           <Route path="/property/:id">
             {(params) => (
               <LazyRoute>
-                <PropertyDetail {...params} />
+                <PropertyDetail />
               </LazyRoute>
             )}
           </Route>
@@ -164,6 +165,15 @@ function Router() {
               <ProtectedLazyRoute>
                 <HealthDashboard />
               </ProtectedLazyRoute>
+            )}
+          </Route>
+          <Route path="/admin/pending-registrations">
+            {() => (
+              <ProtectedRoute requiredRoles={["super_admin"]}>
+                <LazyRoute>
+                  <AdminPendingRegistrations />
+                </LazyRoute>
+              </ProtectedRoute>
             )}
           </Route>
         </>
