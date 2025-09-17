@@ -61,7 +61,11 @@ class QueryTracker {
     this.metrics.errors++;
   }
 
-  updateConnectionMetrics(poolStats: any) {
+  updateConnectionMetrics(poolStats: {
+    totalCount?: number;
+    idleCount?: number;
+    waitingCount?: number;
+  }) {
     this.metrics.totalConnections = poolStats.totalCount || 0;
     this.metrics.activeConnections = (poolStats.totalCount || 0) - (poolStats.idleCount || 0);
     this.metrics.idleConnections = poolStats.idleCount || 0;
@@ -128,11 +132,18 @@ pool.on('release', () => {
   console.log('🔄 Database connection released to pool');
 });
 
+// Pool statistics interface
+interface PoolStats {
+  totalCount?: number;
+  idleCount?: number;
+  waitingCount?: number;
+}
+
 // Database health check function
 export const checkDatabaseHealth = async (): Promise<{
   status: 'healthy' | 'unhealthy';
   metrics: DatabaseMetrics;
-  poolStats: any;
+  poolStats: PoolStats | null;
   latency: number;
 }> => {
   const start = Date.now();
@@ -143,10 +154,16 @@ export const checkDatabaseHealth = async (): Promise<{
     const latency = Date.now() - start;
     
     // Get pool statistics (if available)
-    const poolStats = {
-      totalCount: (pool as any).totalCount,
-      idleCount: (pool as any).idleCount,
-      waitingCount: (pool as any).waitingCount,
+    const poolWithStats = pool as unknown as {
+      totalCount?: number;
+      idleCount?: number;
+      waitingCount?: number;
+    };
+    
+    const poolStats: PoolStats = {
+      totalCount: poolWithStats.totalCount,
+      idleCount: poolWithStats.idleCount,
+      waitingCount: poolWithStats.waitingCount,
     };
     
     queryTracker.updateConnectionMetrics(poolStats);

@@ -16,6 +16,7 @@ import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useI18n } from "@/contexts/I18nContext";
 import { preloadImages } from "@/lib/imageUtils";
 import type { Property } from "@shared/schema";
+import type { PropertyFilters } from "@/components/property-search";
 
 // Memoized PropertyCard for better performance
 const MemoizedPropertyCard = memo(PropertyCard);
@@ -40,7 +41,7 @@ function useDebounced<T>(value: T, delay: number) {
 export default function Properties() {
   const { t } = useI18n();
   const [location] = useLocation();
-  const [filters, setFilters] = useState<any>({});
+  const [filters, setFilters] = useState<Partial<PropertyFilters>>({});
   const [searchInput, setSearchInput] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<{lat: number; lng: number} | null>(null);
   const [sortBy, setSortBy] = useState("newest");
@@ -55,7 +56,7 @@ export default function Properties() {
   // Parse URL parameters
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const initialFilters: any = {};
+    const initialFilters: Partial<PropertyFilters> = {};
     
     urlParams.forEach((value, key) => {
       if (key === 'propertyType') {
@@ -158,7 +159,7 @@ export default function Properties() {
     }
   );
 
-  const handleFilterChange = useCallback((newFilters: any) => {
+  const handleFilterChange = useCallback((newFilters: PropertyFilters) => {
     setFilters(newFilters);
     // Reset infinite query when filters change
     queryClient.removeQueries({ queryKey: ["/api/properties"] });

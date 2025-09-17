@@ -1,3 +1,4 @@
+import { Request, Response, NextFunction } from 'express';
 import { AuthorizationError, ErrorMessages } from '../core/errors';
 import { asyncHandler } from '../core/asyncHandler';
 import { AuthenticatedRequest, UserRoles } from '../core/types';
@@ -16,14 +17,14 @@ const rbacLogger = createModuleLogger('Authorization');
 const authorizationAttempts = new Map<string, { count: number; failures: number; lastAttempt: number }>();
 
 // Helper function to check user roles consistently
-const checkUserRole = (user: any, allowedRoles: string[]): boolean => {
+const checkUserRole = (user: AuthenticatedRequest['user'], allowedRoles: string[]): boolean => {
   const userRole = user?.role;
   return userRole && allowedRoles.includes(userRole);
 };
 
 // Helper function to log authorization events
 const logAuthorizationEvent = (
-  req: any, 
+  req: Request, 
   user: AuthenticatedRequest['user'], 
   requiredRoles: string[], 
   success: boolean, 
@@ -110,10 +111,10 @@ const logAuthorizationEvent = (
  * AGENT OR ADMIN ACCESS MIDDLEWARE
  * Requires user to be either an agent or admin
  */
-export const requireAgent = asyncHandler(async (req: any, res: any, next) => {
+export const requireAgent = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   // First ensure user is authenticated
   await new Promise<void>((resolve, reject) => {
-    requireAuth(req, res, (err?: any) => {
+    requireAuth(req, res, (err?: Error) => {
       if (err) reject(err);
       else resolve();
     });
@@ -137,10 +138,10 @@ export const requireAgent = asyncHandler(async (req: any, res: any, next) => {
  * ADMIN-ONLY ACCESS MIDDLEWARE
  * Requires user to be an admin
  */
-export const requireAdmin = asyncHandler(async (req: any, res: any, next) => {
+export const requireAdmin = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   // First ensure user is authenticated
   await new Promise<void>((resolve, reject) => {
-    requireAuth(req, res, (err?: any) => {
+    requireAuth(req, res, (err?: Error) => {
       if (err) reject(err);
       else resolve();
     });
@@ -164,10 +165,10 @@ export const requireAdmin = asyncHandler(async (req: any, res: any, next) => {
  * CLIENT ACCESS MIDDLEWARE
  * Requires user to be a client (for client-specific features)
  */
-export const requireClient = asyncHandler(async (req: any, res: any, next) => {
+export const requireClient = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   // First ensure user is authenticated
   await new Promise<void>((resolve, reject) => {
-    requireAuth(req, res, (err?: any) => {
+    requireAuth(req, res, (err?: Error) => {
       if (err) reject(err);
       else resolve();
     });
@@ -192,10 +193,10 @@ export const requireClient = asyncHandler(async (req: any, res: any, next) => {
  * Creates middleware for custom role combinations
  */
 export const requireRoles = (allowedRoles: string[]) => {
-  return asyncHandler(async (req: any, res: any, next) => {
+  return asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     // First ensure user is authenticated
     await new Promise<void>((resolve, reject) => {
-      requireAuth(req, res, (err?: any) => {
+      requireAuth(req, res, (err?: Error) => {
         if (err) reject(err);
         else resolve();
       });
@@ -220,11 +221,11 @@ export const requireRoles = (allowedRoles: string[]) => {
  * SELF OR ADMIN ACCESS MIDDLEWARE FACTORY
  * Allows user to access their own resources or admin to access any
  */
-export const requireSelfOrAdmin = (getUserIdFromParams?: (req: any) => string) => {
-  return asyncHandler(async (req: any, res: any, next) => {
+export const requireSelfOrAdmin = (getUserIdFromParams?: (req: Request) => string) => {
+  return asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     // First ensure user is authenticated
     await new Promise<void>((resolve, reject) => {
-      requireAuth(req, res, (err?: any) => {
+      requireAuth(req, res, (err?: Error) => {
         if (err) reject(err);
         else resolve();
       });

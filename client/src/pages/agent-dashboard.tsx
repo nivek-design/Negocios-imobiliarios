@@ -523,7 +523,7 @@ export default function AgentDashboard() {
                   </Card>
                 ))
               ) : inquiries.length > 0 ? (
-                inquiries.map((inquiry: any) => (
+                inquiries.map((inquiry: Inquiry) => (
                   <Card key={inquiry.id}>
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start mb-2">
@@ -535,7 +535,7 @@ export default function AgentDashboard() {
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">
-                        Interessado em: {inquiry.propertyTitle}
+                        Propriedade ID: {inquiry.propertyId.slice(0, 8)}...
                       </p>
                       <p className="text-sm text-foreground mb-3" data-testid={`text-inquiry-message-${inquiry.id}`}>
                         {inquiry.message || "Nenhuma mensagem fornecida"}
@@ -613,7 +613,7 @@ export default function AgentDashboard() {
                             </h4>
                             <div className="flex items-center text-sm text-muted-foreground">
                               <Clock className="w-4 h-4 mr-1" />
-                              {format(parseISO(appointment.appointmentDate), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                              {format(appointment.appointmentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                             </div>
                           </div>
                           
@@ -718,7 +718,7 @@ export default function AgentDashboard() {
                 <div className="bg-muted/50 rounded-lg p-4 border border-border">
                   <h4 className="font-medium text-foreground mb-2">Agendamento Atual</h4>
                   <p className="text-sm text-muted-foreground">
-                    {format(parseISO(rescheduleAppointment.appointmentDate), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                    {format(rescheduleAppointment.appointmentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                   </p>
                 </div>
 

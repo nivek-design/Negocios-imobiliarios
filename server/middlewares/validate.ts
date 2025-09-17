@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Request, Response, NextFunction } from 'express';
 import { ValidationError } from '../core/errors';
 import { asyncHandler } from '../core/asyncHandler';
 import { ValidationSchema } from '../core/types';
@@ -21,7 +22,7 @@ import { config } from '../core/config';
 const logSecurityEvent = (
   level: 'info' | 'warn' | 'error', 
   message: string, 
-  context: Record<string, any> = {}
+  context: Record<string, unknown> = {}
 ) => {
   if (!config.security.logging.enableSecurityLogs) return;
   
@@ -374,7 +375,7 @@ export const secureUrl = (field: string, optional: boolean = false): ValidationC
  * SECURITY VALIDATION MIDDLEWARE
  * Handles express-validator results with security logging
  */
-export const handleSecurityValidation = (req: any, res: any, next: any) => {
+export const handleSecurityValidation = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   
   if (!errors.isEmpty()) {
@@ -450,7 +451,7 @@ export const combineValidation = (
     ...(expressValidators || []),
     handleSecurityValidation,
     // Then apply Zod validation
-    zodSchema ? validate(zodSchema) : (req: any, res: any, next: any) => next(),
+    zodSchema ? validate(zodSchema) : (_req: Request, _res: Response, next: NextFunction) => next(),
   ];
 };
 
@@ -458,7 +459,7 @@ export const combineValidation = (
  * VALIDATION HEALTH CHECK
  * Endpoint to check validation system status
  */
-export const validationHealthCheck = (req: any, res: any): void => {
+export const validationHealthCheck = (_req: Request, res: Response): void => {
   const health = {
     status: 'healthy',
     timestamp: new Date().toISOString(),

@@ -3,8 +3,24 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { AuthContext } from "@/contexts/AuthContext";
+// Use the User type from AuthContext, not the database schema User
+interface AuthUser {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  role: string;
+}
 
-export function useAuth() {
+interface UseAuthReturn {
+  user: AuthUser | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  logout: () => Promise<void>;
+  isLoggingOut: boolean;
+}
+
+export function useAuth(): UseAuthReturn {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
@@ -16,7 +32,7 @@ export function useAuth() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       setIsLoggingOut(true);
       
@@ -47,10 +63,11 @@ export function useAuth() {
       setTimeout(() => {
         window.location.href = '/';
       }, 500);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Erro inesperado ao fazer logout.";
       toast({
         title: "Erro no logout",
-        description: error.message || "Erro inesperado ao fazer logout.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

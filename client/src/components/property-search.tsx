@@ -13,17 +13,45 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useI18n } from "@/contexts/I18nContext";
 
+// Filter interfaces - exported for use in other components
+export interface PropertyFilters {
+  propertyType: string[];
+  keyword: string;
+  minPrice: string;
+  maxPrice: string;
+  bedrooms: string;
+  bathrooms: string;
+  status: string;
+  radius: string;
+  minGarageSpaces: string;
+  minYearBuilt: string;
+  maxYearBuilt: string;
+  minLotArea: string;
+  hasGarage: boolean;
+  hasPool: boolean;
+  hasBalcony: boolean;
+  hasGarden: boolean;
+  hasAirConditioning: boolean;
+  hasFireplace: boolean;
+  hasPetsAllowed: boolean;
+  furnished: boolean;
+  hasElevator: boolean;
+  hasSecurity: boolean;
+  hasGym: boolean;
+  hasPlayground: boolean;
+}
+
 interface PropertySearchProps {
-  onFilterChange: (filters: any) => void;
-  initialFilters?: any;
+  onFilterChange: (filters: PropertyFilters) => void;
+  initialFilters?: Partial<PropertyFilters>;
 }
 
 export default function PropertySearch({
   onFilterChange,
   initialFilters = {},
-}: PropertySearchProps) {
+}: PropertySearchProps): JSX.Element {
   const { t } = useI18n();
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<PropertyFilters>({
     propertyType: [],
     keyword: "",
     minPrice: "",
@@ -61,8 +89,8 @@ export default function PropertySearch({
   }, [filters, onFilterChange]);
 
   const handlePropertyTypeChange = useCallback(
-    (type: string, checked: boolean) => {
-      setFilters((prev: any) => ({
+    (type: string, checked: boolean): void => {
+      setFilters((prev: PropertyFilters) => ({
         ...prev,
         propertyType: checked
           ? [...prev.propertyType, type]
@@ -73,13 +101,13 @@ export default function PropertySearch({
   );
 
   const handleInputChange = useCallback(
-    (field: string, value: string | boolean) => {
-      setFilters((prev: any) => ({ ...prev, [field]: value }));
+    (field: keyof PropertyFilters, value: string | boolean): void => {
+      setFilters((prev: PropertyFilters) => ({ ...prev, [field]: value }));
     },
     [],
   );
 
-  const clearFilters = () => {
+  const clearFilters = (): void => {
     setFilters({
       propertyType: [],
       keyword: "",

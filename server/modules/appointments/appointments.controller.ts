@@ -20,7 +20,7 @@ export class AppointmentsController {
    * POST /api/appointments
    * Create new appointment (public endpoint)
    */
-  createAppointment = asyncHandler(async (req: any, res: Response) => {
+  createAppointment = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const data: CreateAppointmentRequest = req.body;
     
     const result = await this.appointmentsService.createAppointment(data);
@@ -39,7 +39,7 @@ export class AppointmentsController {
    * GET /api/agent/appointments
    * Get appointments for the authenticated agent
    */
-  getAgentAppointments = asyncHandler(async (req: any, res: Response) => {
+  getAgentAppointments = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const agentId = authReq.user.id;
     
@@ -59,7 +59,7 @@ export class AppointmentsController {
    * GET /api/properties/:propertyId/appointments
    * Get appointments for a specific property (agent/admin only)
    */
-  getPropertyAppointments = asyncHandler(async (req: any, res: Response) => {
+  getPropertyAppointments = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const { propertyId } = authReq.params;
     const userId = authReq.user.id;
@@ -81,7 +81,7 @@ export class AppointmentsController {
    * GET /api/agents/:agentId/available-slots
    * Get available time slots for agent on specific date (public endpoint)
    */
-  getAgentAvailableSlots = asyncHandler(async (req: any, res: Response) => {
+  getAgentAvailableSlots = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const { agentId } = req.params;
     const { date } = req.query;
     
@@ -101,7 +101,7 @@ export class AppointmentsController {
    * PUT /api/appointments/:id
    * Update appointment (authenticated users only)
    */
-  updateAppointment = asyncHandler(async (req: any, res: Response) => {
+  updateAppointment = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const { id } = authReq.params;
     const data: UpdateAppointmentRequest = authReq.body;
@@ -124,7 +124,7 @@ export class AppointmentsController {
    * DELETE /api/appointments/:id
    * Delete appointment (authenticated users only)
    */
-  deleteAppointment = asyncHandler(async (req: any, res: Response) => {
+  deleteAppointment = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const { id } = authReq.params;
     const userId = authReq.user.id;
@@ -146,7 +146,7 @@ export class AppointmentsController {
    * POST /api/appointments/send-reminders
    * Send appointment reminders (public endpoint for cron jobs)
    */
-  sendAppointmentReminders = asyncHandler(async (req: any, res: Response) => {
+  sendAppointmentReminders = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const result = await this.appointmentsService.sendAppointmentReminders();
     
     if (!result.success) {

@@ -1,17 +1,30 @@
+/// <reference types="google.maps" />
 import { Loader } from '@googlemaps/js-api-loader';
 
 let googleMapsLoader: Loader | null = null;
 let isLoaded = false;
 
+interface WindowWithGoogle extends Window {
+  google?: {
+    maps: typeof google.maps;
+  };
+}
+
+declare global {
+  interface Window {
+    google?: typeof google;
+  }
+}
+
 export const initializeGoogleMaps = async (): Promise<typeof google.maps> => {
-  if (isLoaded && (window as any).google?.maps) {
-    return (window as any).google.maps;
+  if (isLoaded && window.google?.maps) {
+    return window.google.maps;
   }
 
   if (!googleMapsLoader) {
     // Get API key from server
     const response = await fetch('/api/config/maps');
-    const config = await response.json();
+    const config: { apiKey?: string } = await response.json();
     const apiKey = config.apiKey || '';
     
     googleMapsLoader = new Loader({
@@ -25,7 +38,7 @@ export const initializeGoogleMaps = async (): Promise<typeof google.maps> => {
 
   await googleMapsLoader.load();
   isLoaded = true;
-  return window.google.maps;
+  return window.google!.maps;
 };
 
 export interface PlaceInfo {
@@ -55,11 +68,11 @@ export const searchNearbyPlaces = async (
           {
             location,
             radius,
-            type: type as any,
+            type: type,
           },
-          (results, status) => {
+          (results: google.maps.places.PlaceResult[] | null, status: google.maps.places.PlacesServiceStatus) => {
             if (status === maps.places.PlacesServiceStatus.OK && results) {
-              const places = results.slice(0, 5).map(place => ({
+              const places = results.slice(0, 5).map((place: google.maps.places.PlaceResult) => ({
                 name: place.name || '',
                 type: type,
                 distance: maps.geometry.spherical.computeDistanceBetween(
@@ -103,7 +116,7 @@ export const calculateDistance = async (
         avoidHighways: false,
         avoidTolls: false,
       },
-      (response, status) => {
+      (response: google.maps.DistanceMatrixResponse | null, status: google.maps.DistanceMatrixStatus) => {
         if (status === maps.DistanceMatrixStatus.OK && response) {
           const element = response.rows[0]?.elements[0];
           if (element?.status === 'OK') {
@@ -128,7 +141,7 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number; ln
   return new Promise((resolve) => {
     const geocoder = new maps.Geocoder();
     
-    geocoder.geocode({ address }, (results, status) => {
+    geocoder.geocode({ address }, (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
       if (status === maps.GeocoderStatus.OK && results?.[0]) {
         const location = results[0].geometry.location;
         resolve({

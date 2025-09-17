@@ -6,15 +6,36 @@ import { eq } from 'drizzle-orm';
 export interface AuthUser {
   id: string;
   email: string;
-  role: string;
+  role: 'client' | 'agent' | 'admin';
   firstName?: string;
   lastName?: string;
+}
+
+// Supabase sign up options interface
+interface SupabaseSignUpOptions {
+  email: string;
+  password: string;
+  options?: {
+    data?: {
+      firstName?: string;
+      lastName?: string;
+      role?: string;
+    };
+    emailRedirectTo?: string | undefined;
+  };
+}
+
+// Database error interface
+interface DatabaseError extends Error {
+  code?: string;
+  constraint?: string;
+  detail?: string;
 }
 
 // Sign up new user with Supabase Auth
 export async function signUp(email: string, password: string, firstName?: string, lastName?: string, role: string = 'client', autoConfirm: boolean = false) {
   try {
-    const signUpOptions: any = {
+    const signUpOptions: SupabaseSignUpOptions = {
       email,
       password,
       options: {
@@ -52,9 +73,10 @@ export async function signUp(email: string, password: string, firstName?: string
           updatedAt: new Date()
         });
         console.log(`User ${email} created in local database with role ${role}`);
-      } catch (dbError: any) {
+      } catch (dbError: unknown) {
+        const error = dbError as DatabaseError;
         // If user already exists in local DB, update it
-        if (dbError.code === '23505') { // Unique constraint violation
+        if (error.code === '23505') { // Unique constraint violation
           await db.update(users)
             .set({
               firstName: firstName || '',
@@ -65,8 +87,8 @@ export async function signUp(email: string, password: string, firstName?: string
             .where(eq(users.id, data.user.id));
           console.log(`User ${email} updated in local database with role ${role}`);
         } else {
-          console.error('Database error creating user:', dbError);
-          throw dbError;
+          console.error('Database error creating user:', error);
+          throw error;
         }
       }
     }
@@ -159,8 +181,9 @@ export async function signIn(email: string, password: string) {
               isLocalBypass: true // Flag to indicate this is a local bypass
             };
             
-          } catch (bypassError: any) {
-            console.error(`❌ Local bypass failed for ${email}:`, bypassError.message);
+          } catch (bypassError: unknown) {
+            const error = bypassError as Error;
+            console.error(`❌ Local bypass failed for ${email}:`, error.message);
           }
           
           // If local bypass also failed, provide helpful error message

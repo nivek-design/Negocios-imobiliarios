@@ -1,3 +1,4 @@
+import { Request, Response, NextFunction } from 'express';
 import { storage } from '../storage';
 import { NotFoundError, AuthorizationError, ErrorMessages } from '../core/errors';
 import { asyncHandler } from '../core/asyncHandler';
@@ -14,10 +15,10 @@ import { requireAuth } from './auth';
  * Ensures agents can only access their own properties, admins can access all
  * Attaches the property to req.property for use in controllers
  */
-export const requirePropertyOwnership = asyncHandler(async (req: any, res: any, next) => {
+export const requirePropertyOwnership = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   // First ensure user is authenticated
   await new Promise<void>((resolve, reject) => {
-    requireAuth(req, res, (err?: any) => {
+    requireAuth(req, res, (err?: Error) => {
       if (err) reject(err);
       else resolve();
     });
@@ -39,7 +40,7 @@ export const requirePropertyOwnership = asyncHandler(async (req: any, res: any, 
   
   // Admin can access any property
   if (user.role === UserRoles.ADMIN) {
-    (req as any).property = property;
+    (req as AuthenticatedRequest).property = property;
     return next();
   }
   
@@ -49,7 +50,7 @@ export const requirePropertyOwnership = asyncHandler(async (req: any, res: any, 
   }
   
   // Attach property to request for use in controllers
-  (req as any).property = property;
+  (req as AuthenticatedRequest).property = property;
   next();
 });
 
@@ -57,10 +58,10 @@ export const requirePropertyOwnership = asyncHandler(async (req: any, res: any, 
  * INQUIRY OWNERSHIP MIDDLEWARE
  * For accessing inquiries - agents can see inquiries for their properties
  */
-export const requireInquiryOwnership = asyncHandler(async (req: any, res: any, next) => {
+export const requireInquiryOwnership = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   // First ensure user is authenticated
   await new Promise<void>((resolve, reject) => {
-    requireAuth(req, res, (err?: any) => {
+    requireAuth(req, res, (err?: Error) => {
       if (err) reject(err);
       else resolve();
     });
@@ -84,10 +85,10 @@ export const requireInquiryOwnership = asyncHandler(async (req: any, res: any, n
  * APPOINTMENT OWNERSHIP MIDDLEWARE
  * Ensures users can only access appointments they're involved in
  */
-export const requireAppointmentOwnership = asyncHandler(async (req: any, res: any, next) => {
+export const requireAppointmentOwnership = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   // First ensure user is authenticated
   await new Promise<void>((resolve, reject) => {
-    requireAuth(req, res, (err?: any) => {
+    requireAuth(req, res, (err?: Error) => {
       if (err) reject(err);
       else resolve();
     });
@@ -109,7 +110,7 @@ export const requireAppointmentOwnership = asyncHandler(async (req: any, res: an
   
   // Admin can access any appointment
   if (user.role === UserRoles.ADMIN) {
-    (req as any).appointment = appointment;
+    (req as AuthenticatedRequest).appointment = appointment;
     return next();
   }
   
@@ -121,7 +122,7 @@ export const requireAppointmentOwnership = asyncHandler(async (req: any, res: an
   }
   
   // Attach appointment to request for use in controllers
-  (req as any).appointment = appointment;
+  (req as AuthenticatedRequest).appointment = appointment;
   next();
 });
 

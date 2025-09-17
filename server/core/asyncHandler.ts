@@ -35,11 +35,11 @@ export const asyncHandler = (fn: RequestHandler): RequestHandler => {
  * Creates consistent success responses
  */
 export const sendSuccess = <T>(
-  res: any, 
+  res: Response, 
   data: T, 
   message?: string, 
   statusCode: number = 200
-) => {
+): void => {
   res.status(statusCode).json({
     success: true,
     data,
@@ -53,10 +53,10 @@ export const sendSuccess = <T>(
  * For resource creation endpoints
  */
 export const sendCreated = <T>(
-  res: any, 
+  res: Response, 
   data: T, 
   message?: string
-) => {
+): void => {
   sendSuccess(res, data, message, 201);
 };
 
@@ -64,7 +64,7 @@ export const sendCreated = <T>(
  * No Content Response Helper
  * For successful operations with no return data
  */
-export const sendNoContent = (res: any) => {
+export const sendNoContent = (res: Response): void => {
   res.status(204).end();
 };
 

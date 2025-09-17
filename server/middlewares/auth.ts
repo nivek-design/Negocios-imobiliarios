@@ -68,16 +68,27 @@ const trackAuthAttempt = (ip: string, method: string, success: boolean): void =>
   }
 };
 
-// Helper functions for user data extraction and standardization
-const getUserId = (user: any): string => {
-  return user?.id || user?.claims?.sub || user?.sub;
+// Helper functions for user data extraction and standardization  
+interface UserData {
+  id?: string;
+  claims?: { sub: string };
+  sub?: string;
+  role?: string;
+  userRole?: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+const getUserId = (user: UserData): string => {
+  return user?.id || user?.claims?.sub || user?.sub || '';
 };
 
-const getUserRole = (user: any): string => {
+const getUserRole = (user: UserData): string => {
   return user?.role || user?.userRole || 'client';
 };
 
-const standardizeUser = (userData: any): AuthenticatedUser => {
+const standardizeUser = (userData: UserData): AuthenticatedUser => {
   const userId = getUserId(userData);
   const userRole = getUserRole(userData);
   
@@ -95,14 +106,14 @@ const standardizeUser = (userData: any): AuthenticatedUser => {
  * ENHANCED REQUIRED AUTHENTICATION MIDDLEWARE
  * Requires user to be authenticated with comprehensive security audit logging
  */
-export const requireAuth = asyncHandler(async (req: any, res: any, next) => {
+export const requireAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   const logger = req.logger || createRequestLogger(req);
   const ip = req.ip || req.connection.remoteAddress;
   const userAgent = req.headers['user-agent'];
   let user: AuthenticatedUser | null = null;
   let authMethod: string = '';
   let authSuccess = false;
-  const authDetails: any = {
+  const authDetails: Record<string, unknown> = {
     path: req.path,
     method: req.method,
     ip,
@@ -351,7 +362,7 @@ export const requireAuth = asyncHandler(async (req: any, res: any, next) => {
  * OPTIONAL AUTHENTICATION MIDDLEWARE
  * Sets user if authenticated, but doesn't require authentication
  */
-export const optionalAuth = asyncHandler(async (req: any, res: any, next) => {
+export const optionalAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   try {
     await requireAuth(req, res, () => {
       // User is authenticated
@@ -378,7 +389,7 @@ export const optionalAuth = asyncHandler(async (req: any, res: any, next) => {
  * JWT TOKEN GENERATOR
  * Creates secure tokens containing user data for stateless authentication
  */
-export const generateToken = (user: any, rememberMe: boolean = false): string => {
+export const generateToken = (user: Pick<AuthenticatedUser, 'id' | 'email' | 'role' | 'firstName' | 'lastName'>, rememberMe: boolean = false): string => {
   const expiresIn = rememberMe ? config.jwt.rememberMeExpiresIn : config.jwt.expiresIn;
   
   return jwt.sign(

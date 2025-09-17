@@ -23,7 +23,7 @@ export class PropertiesController {
    * GET /api/properties
    * Get properties with filters (public endpoint)
    */
-  getProperties = asyncHandler(async (req: any, res: Response) => {
+  getProperties = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const filters: PropertyFiltersRequest = req.query;
     
     const result = await this.propertiesService.getProperties(filters);
@@ -42,7 +42,7 @@ export class PropertiesController {
    * GET /api/properties/featured
    * Get featured properties (public endpoint)
    */
-  getFeaturedProperties = asyncHandler(async (req: any, res: Response) => {
+  getFeaturedProperties = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const result = await this.propertiesService.getFeaturedProperties();
     
     if (!result.success) {
@@ -59,7 +59,7 @@ export class PropertiesController {
    * GET /api/properties/:id
    * Get property by ID (public endpoint)
    */
-  getProperty = asyncHandler(async (req: any, res: Response) => {
+  getProperty = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const { id } = req.params;
     
     const result = await this.propertiesService.getProperty(id);
@@ -78,7 +78,7 @@ export class PropertiesController {
    * POST /api/properties
    * Create new property (agent/admin only)
    */
-  createProperty = asyncHandler(async (req: any, res: Response) => {
+  createProperty = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const data: CreatePropertyRequest = authReq.body;
     const agentId = authReq.user.id;
@@ -99,7 +99,7 @@ export class PropertiesController {
    * PUT /api/properties/:id
    * Update property (agent/admin only, with ownership check)
    */
-  updateProperty = asyncHandler(async (req: any, res: Response) => {
+  updateProperty = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const { id } = authReq.params;
     const data: UpdatePropertyRequest = authReq.body;
@@ -122,7 +122,7 @@ export class PropertiesController {
    * DELETE /api/properties/:id
    * Delete property (agent/admin only, with ownership check)
    */
-  deleteProperty = asyncHandler(async (req: any, res: Response) => {
+  deleteProperty = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const { id } = authReq.params;
     const userId = authReq.user.id;
@@ -144,7 +144,7 @@ export class PropertiesController {
    * GET /api/agent/properties
    * Get properties for the authenticated agent
    */
-  getAgentProperties = asyncHandler(async (req: any, res: Response) => {
+  getAgentProperties = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const agentId = authReq.user.id;
     
@@ -164,7 +164,7 @@ export class PropertiesController {
    * POST /api/properties/:id/view
    * Record property view (optional authentication)
    */
-  recordPropertyView = asyncHandler(async (req: any, res: Response) => {
+  recordPropertyView = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const optAuthReq = req as OptionalAuthRequest;
     const { id: propertyId } = optAuthReq.params;
     const userId = optAuthReq.user?.id;
@@ -186,7 +186,7 @@ export class PropertiesController {
    * POST /api/properties/:id/favorite
    * Add property to favorites (authenticated users only)
    */
-  addToFavorites = asyncHandler(async (req: any, res: Response) => {
+  addToFavorites = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const { id: propertyId } = authReq.params;
     const userId = authReq.user.id;
@@ -207,7 +207,7 @@ export class PropertiesController {
    * DELETE /api/properties/:id/favorite
    * Remove property from favorites (authenticated users only)
    */
-  removeFromFavorites = asyncHandler(async (req: any, res: Response) => {
+  removeFromFavorites = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const { id: propertyId } = authReq.params;
     const userId = authReq.user.id;
@@ -228,7 +228,7 @@ export class PropertiesController {
    * GET /api/properties/:id/is-favorited
    * Check if property is favorited by user (authenticated users only)
    */
-  isPropertyFavorited = asyncHandler(async (req: any, res: Response) => {
+  isPropertyFavorited = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const { id: propertyId } = authReq.params;
     const userId = authReq.user.id;
@@ -249,7 +249,7 @@ export class PropertiesController {
    * GET /api/user/favorites
    * Get user's favorite properties (authenticated users only)
    */
-  getUserFavorites = asyncHandler(async (req: any, res: Response) => {
+  getUserFavorites = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user.id;
     
@@ -269,7 +269,7 @@ export class PropertiesController {
    * POST /api/properties/:id/geocode
    * Geocode property address (authenticated users only)
    */
-  geocodeProperty = asyncHandler(async (req: any, res: Response) => {
+  geocodeProperty = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const data: GeocodePropertyRequest = authReq.body;
     
@@ -289,7 +289,7 @@ export class PropertiesController {
    * PUT /api/property-images
    * Set property image with proper ACL (authenticated users only)
    */
-  setPropertyImage = asyncHandler(async (req: any, res: Response) => {
+  setPropertyImage = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const data: SetPropertyImageRequest = authReq.body;
     const userId = authReq.user.id;

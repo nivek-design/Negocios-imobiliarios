@@ -76,7 +76,7 @@ const loggingConfig = {
 // Helper function to determine if request should be logged
 function shouldLogRequest(req: Request): boolean {
   // Skip certain paths
-  if (loggingConfig.skipPaths.includes(req.path as any)) {
+  if (loggingConfig.skipPaths.includes(req.path)) {
     return false;
   }
   
@@ -90,12 +90,12 @@ function shouldLogRequest(req: Request): boolean {
 }
 
 // Helper function to sanitize headers
-function sanitizeHeaders(headers: Record<string, any>): Record<string, any> {
-  const sanitized: Record<string, any> = {};
+function sanitizeHeaders(headers: Record<string, string | string[]>): Record<string, string | string[]> {
+  const sanitized: Record<string, string | string[]> = {};
   
   for (const [key, value] of Object.entries(headers)) {
     const lowerKey = key.toLowerCase();
-    if (loggingConfig.sensitiveHeaders.includes(lowerKey as any)) {
+    if (loggingConfig.sensitiveHeaders.includes(lowerKey)) {
       sanitized[key] = '[REDACTED]';
     } else {
       sanitized[key] = value;
@@ -106,8 +106,8 @@ function sanitizeHeaders(headers: Record<string, any>): Record<string, any> {
 }
 
 // Helper function to sanitize query parameters
-function sanitizeQuery(query: Record<string, any>): Record<string, any> {
-  const sanitized: Record<string, any> = {};
+function sanitizeQuery(query: Record<string, unknown>): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {};
   
   for (const [key, value] of Object.entries(query)) {
     const lowerKey = key.toLowerCase();
@@ -122,7 +122,7 @@ function sanitizeQuery(query: Record<string, any>): Record<string, any> {
 }
 
 // Helper function to sanitize request body
-function sanitizeBody(body: any): any {
+function sanitizeBody(body: unknown): unknown {
   if (!body || typeof body !== 'object') {
     return body;
   }

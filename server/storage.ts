@@ -24,8 +24,11 @@ import {
   type SelectOptions,
   type QueryMetrics,
 } from "@shared/schema";
+import { PropertyFilters } from "./core/types";
 import { db, executeWithMetrics, withoutSoftDeleted, onlySoftDeleted, withSoftDeleted } from "./db";
-import { eq, desc, asc, and, gte, lte, lt, ilike, or, sql, inArray, isNull, isNotNull, exists, count } from "drizzle-orm";
+import { eq, desc, asc, and, gte, lte, lt, ilike, or, sql, inArray, isNull, isNotNull, exists, count, type SQL } from "drizzle-orm";
+import type { PgSelectQueryBuilder, PgSelect } from "drizzle-orm/pg-core";
+import type { NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
 
 // Calculate distance between two coordinates using Haversine formula
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -51,8 +54,12 @@ const applySoftDeleteFilter = (options?: SoftDeleteOptions) => {
   return withoutSoftDeleted;
 };
 
-// Pagination utilities
-const applyPagination = (query: any, pagination?: PaginationOptions) => {
+// Define query types for better type safety
+type DatabaseQuery = PgSelect<any, any, any, any>;
+type QueryWithConditions = PgSelectQueryBuilder<any, any, any, any, any, any, any>;
+
+// Pagination utilities with proper typing
+const applyPagination = <T extends DatabaseQuery>(query: T, pagination?: PaginationOptions): T => {
   if (!pagination) return query;
   
   if (pagination.limit) {
@@ -66,7 +73,12 @@ const applyPagination = (query: any, pagination?: PaginationOptions) => {
   return query;
 };
 
-const applyCursorPagination = (query: any, table: any, pagination?: CursorPaginationOptions, existingConditions: any[] = []) => {
+const applyCursorPagination = <T extends QueryWithConditions>(
+  query: T, 
+  table: Record<string, any>, 
+  pagination?: CursorPaginationOptions, 
+  existingConditions: SQL[] = []
+): T => {
   if (!pagination) return query;
   
   const conditions = [...existingConditions];
@@ -101,7 +113,7 @@ const createPaginatedResponse = <T>(data: T[], pagination?: PaginationOptions | 
   }
   
   // Compute cursors based on sort field or fallback to id
-  const getCursorValue = (item: any, sortField?: string) => {
+  const getCursorValue = (item: Record<string, unknown>, sortField?: string): unknown => {
     if (!sortField || sortField === 'id') {
       return item.id;
     }
@@ -180,7 +192,19 @@ export interface IStorage {
   
   // Analytics operations
   getAppointmentsByDateRange(startDate: string, endDate: string, options?: SoftDeleteOptions): Promise<Appointment[]>;
-  getDashboardMetrics(agentId?: string): Promise<any>;
+  getDashboardMetrics(agentId?: string): Promise<{
+    totalProperties: number;
+    totalInquiries: number;
+    totalAppointments: number;
+    totalViews: number;
+    totalFavorites: number;
+    recentActivity: Array<{
+      type: 'property' | 'inquiry' | 'appointment';
+      title: string;
+      date: Date;
+      status?: string;
+    }>;
+  }>;
 }
 
 export interface PropertyFilters {

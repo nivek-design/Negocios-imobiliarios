@@ -8,6 +8,15 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/contexts/I18nContext";
 import { Camera } from "lucide-react";
 
+// API Response types
+interface UploadURLResponse {
+  uploadURL: string;
+}
+
+interface ImageACLResponse {
+  objectPath: string;
+}
+
 interface ImageUploaderProps {
   maxNumberOfFiles?: number;
   maxFileSize?: number;
@@ -42,7 +51,7 @@ export function ImageUploader({
 }: ImageUploaderProps) {
   const { t } = useI18n();
   const [showModal, setShowModal] = useState(false);
-  const [uppy] = useState(() => {
+  const [uppy] = useState<Uppy>(() => {
     const uppyInstance = new Uppy({
       restrictions: {
         maxNumberOfFiles,
@@ -63,7 +72,7 @@ export function ImageUploader({
           console.error('Failed to get upload URL:', response.status, response.statusText);
           throw new Error('Failed to get upload URL');
         }
-        const data = await response.json();
+        const data: UploadURLResponse = await response.json();
         console.log('Upload URL received:', data.uploadURL);
         return {
           method: 'PUT' as const,
@@ -92,14 +101,14 @@ export function ImageUploader({
               });
               
               if (response.ok) {
-                const data = await response.json();
+                const data: ImageACLResponse = await response.json();
                 console.log('Image ACL set, object path:', data.objectPath);
                 uploadedUrls.push(data.objectPath);
               } else {
                 console.error('Failed to set image ACL:', response.status);
               }
-            } catch (error) {
-              console.error('Error setting image ACL:', error);
+            } catch (error: unknown) {
+              console.error('Error setting image ACL:', error instanceof Error ? error.message : String(error));
             }
           }
         }
@@ -110,8 +119,8 @@ export function ImageUploader({
       }
     });
 
-    uppyInstance.on("error", (error) => {
-      console.error('Uppy error:', error);
+    uppyInstance.on("error", (error: Error) => {
+      console.error('Uppy error:', error.message);
     });
 
     return uppyInstance;

@@ -44,10 +44,29 @@ export function getSession() {
   });
 }
 
+// User session interface
+interface UserSession {
+  claims?: client.TokenSet;
+  access_token?: string;
+  refresh_token?: string;
+  expires_at?: number;
+}
+
+// OpenID claims interface
+interface OpenIdClaims {
+  sub: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  profile_image_url?: string;
+  exp?: number;
+  [key: string]: unknown;
+}
+
 function updateUserSession(
-  user: any,
+  user: UserSession,
   tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
-) {
+): void {
   user.claims = tokens.claims();
   user.access_token = tokens.access_token;
   user.refresh_token = tokens.refresh_token;
@@ -55,8 +74,8 @@ function updateUserSession(
 }
 
 async function upsertUser(
-  claims: any,
-) {
+  claims: OpenIdClaims,
+): Promise<void> {
   await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"],

@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { ConfigService } from './config.service';
 import { asyncHandler, sendSuccess } from '../../core/asyncHandler';
+import { OptionalAuthRequest } from '../../core/types';
 
 /**
  * CONFIG CONTROLLER
@@ -15,7 +16,7 @@ export class ConfigController {
    * GET /api/config/maps
    * Get Google Maps API key configuration
    */
-  getMapsConfig = asyncHandler(async (req: any, res: Response) => {
+  getMapsConfig = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const result = await this.configService.getMapsConfig();
     
     if (!result.success) {
@@ -32,7 +33,7 @@ export class ConfigController {
    * GET /api/config
    * Get public application configuration
    */
-  getPublicConfig = asyncHandler(async (req: any, res: Response) => {
+  getPublicConfig = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const result = await this.configService.getPublicConfig();
     
     if (!result.success) {

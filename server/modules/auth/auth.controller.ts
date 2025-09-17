@@ -27,7 +27,7 @@ export class AuthController {
    * POST /api/auth/login
    * Authenticate user with email/password
    */
-  login = asyncHandler(async (req: any, res: Response) => {
+  login = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const data: LoginRequest = req.body;
     
     const result = await this.authService.login(data);
@@ -43,7 +43,9 @@ export class AuthController {
     setAuthCookie(res, result.data.token, data.rememberMe);
     
     // Store in session as fallback authentication method
-    (req.session as any).user = result.data.user;
+    if (req.session) {
+      (req.session as any).user = result.data.user;
+    }
     
     sendSuccess(res, {
       message: "Login realizado com sucesso",
@@ -57,7 +59,7 @@ export class AuthController {
    * POST /api/auth/register
    * Register new user account
    */
-  register = asyncHandler(async (req: any, res: Response) => {
+  register = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const data: RegisterRequest = req.body;
     
     const result = await this.authService.register(data);
@@ -79,7 +81,7 @@ export class AuthController {
    * POST /api/auth/logout
    * Sign out user and clear authentication
    */
-  logout = asyncHandler(async (req: any, res: Response) => {
+  logout = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const result = await this.authService.logout();
     
     // Clear authentication cookies
@@ -87,7 +89,7 @@ export class AuthController {
     
     // Destroy session if exists
     if (req.session?.user) {
-      req.session.destroy((err: any) => {
+      req.session.destroy((err: Error | null) => {
         if (err) {
           console.error("Error destroying session:", err);
           return res.status(500).json({ 
@@ -111,13 +113,22 @@ export class AuthController {
    * GET /api/auth/user  
    * Get current authenticated user
    */
-  getUser = asyncHandler(async (req: any, res: Response) => {
+  getUser = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     // Check JWT token first
     const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.authToken;
     
     if (token) {
       try {
-        const decoded = jwt.verify(token, config.jwt.secret) as any;
+        interface JWTPayload {
+          id: string;
+          email: string;
+          firstName?: string;
+          lastName?: string;
+          role: string;
+          exp?: number;
+          iat?: number;
+        }
+        const decoded = jwt.verify(token, config.jwt.secret) as JWTPayload;
         // Return user from JWT payload
         return sendSuccess(res, {
           id: decoded.id,
@@ -155,7 +166,7 @@ export class AuthController {
    * POST /api/auth/admin/create-user
    * Create admin user (admin only)
    */
-  createAdminUser = asyncHandler(async (req: any, res: Response) => {
+  createAdminUser = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const data: CreateAdminUserRequest = authReq.body;
     
@@ -175,7 +186,7 @@ export class AuthController {
    * POST /api/auth/admin/create-agent
    * Create agent user (admin only)
    */
-  createAgentUser = asyncHandler(async (req: any, res: Response) => {
+  createAgentUser = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const data: CreateAgentUserRequest = authReq.body;
     

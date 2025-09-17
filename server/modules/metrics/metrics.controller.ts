@@ -16,7 +16,7 @@ export class MetricsController {
    * GET /api/agent/metrics
    * Get metrics for the authenticated agent
    */
-  getAgentMetrics = asyncHandler(async (req: any, res: Response) => {
+  getAgentMetrics = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const agentId = authReq.user.id;
     
@@ -36,7 +36,7 @@ export class MetricsController {
    * GET /api/properties/:id/metrics
    * Get metrics for a specific property (agent/admin only)
    */
-  getPropertyMetrics = asyncHandler(async (req: any, res: Response) => {
+  getPropertyMetrics = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const { id: propertyId } = authReq.params;
     
@@ -56,7 +56,7 @@ export class MetricsController {
    * GET /api/admin/metrics
    * Get system-wide metrics (admin only)
    */
-  getSystemMetrics = asyncHandler(async (req: any, res: Response) => {
+  getSystemMetrics = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const result = await this.metricsService.getSystemMetrics();
     

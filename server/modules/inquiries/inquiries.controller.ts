@@ -17,7 +17,7 @@ export class InquiriesController {
    * POST /api/inquiries
    * Create new inquiry (public endpoint)
    */
-  createInquiry = asyncHandler(async (req: any, res: Response) => {
+  createInquiry = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const data: CreateInquiryRequest = req.body;
     
     const result = await this.inquiriesService.createInquiry(data);
@@ -36,7 +36,7 @@ export class InquiriesController {
    * GET /api/agent/inquiries
    * Get inquiries for the authenticated agent
    */
-  getAgentInquiries = asyncHandler(async (req: any, res: Response) => {
+  getAgentInquiries = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const agentId = authReq.user.id;
     
@@ -56,7 +56,7 @@ export class InquiriesController {
    * GET /api/properties/:id/inquiries
    * Get inquiries for a specific property (agent/admin only)
    */
-  getPropertyInquiries = asyncHandler(async (req: any, res: Response) => {
+  getPropertyInquiries = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const { id: propertyId } = authReq.params;
     const userId = authReq.user.id;

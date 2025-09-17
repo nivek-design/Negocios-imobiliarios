@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { ObjectsService } from './objects.service';
 import { asyncHandler, sendSuccess } from '../../core/asyncHandler';
-import { AuthenticatedRequest } from '../../core/types';
+import { AuthenticatedRequest, OptionalAuthRequest } from '../../core/types';
 
 /**
  * OBJECTS CONTROLLER
@@ -16,7 +16,7 @@ export class ObjectsController {
    * GET /public-objects/:filePath(*)
    * Download public object by file path
    */
-  getPublicObject = asyncHandler(async (req: any, res: Response) => {
+  getPublicObject = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const filePath = req.params.filePath;
     await this.objectsService.getPublicObject(filePath, res);
   });
@@ -25,7 +25,7 @@ export class ObjectsController {
    * GET /objects/:objectPath(*)
    * Download object by object path (with ACL check)
    */
-  getObject = asyncHandler(async (req: any, res: Response) => {
+  getObject = asyncHandler(async (req: OptionalAuthRequest, res: Response) => {
     const objectPath = req.path;
     await this.objectsService.getObject(objectPath, res);
   });
@@ -34,7 +34,7 @@ export class ObjectsController {
    * POST /api/objects/upload
    * Get upload URL for authenticated user
    */
-  getUploadUrl = asyncHandler(async (req: any, res: Response) => {
+  getUploadUrl = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const result = await this.objectsService.getUploadUrl();
     
@@ -52,7 +52,7 @@ export class ObjectsController {
    * PUT /api/property-images
    * Set property image ACL (handled by properties module, kept for compatibility)
    */
-  setPropertyImageAcl = asyncHandler(async (req: any, res: Response) => {
+  setPropertyImageAcl = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const { imageURL } = authReq.body;
     

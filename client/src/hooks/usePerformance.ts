@@ -1,5 +1,17 @@
 import { useEffect, useCallback, useRef } from 'react';
 
+interface WindowWithGtag extends Window {
+  gtag?: (...args: unknown[]) => void;
+}
+
+interface PerformanceWithMemory extends Performance {
+  memory?: {
+    usedJSHeapSize: number;
+    totalJSHeapSize: number;
+    jsHeapSizeLimit: number;
+  };
+}
+
 interface WebVitalsMetric {
   name: string;
   value: number;
@@ -20,7 +32,7 @@ interface PerformanceMetrics {
 /**
  * Hook for monitoring Web Vitals and performance metrics
  */
-export function useWebVitals(onMetric?: (metric: WebVitalsMetric) => void) {
+export function useWebVitals(onMetric?: (metric: WebVitalsMetric) => void): PerformanceMetrics {
   const metricsRef = useRef<PerformanceMetrics>({
     cls: null,
     fcp: null,
@@ -40,8 +52,9 @@ export function useWebVitals(onMetric?: (metric: WebVitalsMetric) => void) {
     // Send to analytics service (can be configured)
     if (import.meta.env.PROD) {
       // Example: send to Google Analytics
-      if (typeof (window as any).gtag !== 'undefined') {
-        (window as any).gtag('event', metric.name, {
+      const windowWithGtag = window as WindowWithGtag;
+      if (typeof windowWithGtag.gtag !== 'undefined') {
+        windowWithGtag.gtag('event', metric.name, {
           event_category: 'Web Vitals',
           value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
           event_label: metric.id,
@@ -80,7 +93,7 @@ export function useWebVitals(onMetric?: (metric: WebVitalsMetric) => void) {
 /**
  * Hook for monitoring custom performance metrics
  */
-export function usePerformanceMetrics() {
+export function usePerformanceMetrics(): { startMeasure: (name: string) => void; endMeasure: (name: string) => number | null; measureAsync: <T>(name: string, asyncFn: () => Promise<T>) => Promise<T>; } {
   const measureRef = useRef<Map<string, number>>(new Map());
 
   const startMeasure = useCallback((name: string) => {
@@ -131,7 +144,7 @@ export function usePerformanceMetrics() {
 /**
  * Hook for monitoring component render performance
  */
-export function useRenderMetrics(componentName: string) {
+export function useRenderMetrics(componentName: string): () => { renderCount: number; mountTime: number; isFirstRender: boolean; } {
   const renderCountRef = useRef(0);
   const mountTimeRef = useRef<number>(0);
 
@@ -162,10 +175,11 @@ export function useRenderMetrics(componentName: string) {
 /**
  * Hook for monitoring memory usage (experimental)
  */
-export function useMemoryMonitoring() {
-  const checkMemory = useCallback(() => {
-    if ('memory' in performance) {
-      const memory = (performance as any).memory;
+export function useMemoryMonitoring(): () => { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number; } | null {
+  const checkMemory = useCallback((): { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number; } | null => {
+    const performanceWithMemory = performance as PerformanceWithMemory;
+    if ('memory' in performanceWithMemory) {
+      const memory = performanceWithMemory.memory;
       return {
         usedJSHeapSize: memory.usedJSHeapSize,
         totalJSHeapSize: memory.totalJSHeapSize,
@@ -200,7 +214,7 @@ export function useMemoryMonitoring() {
 export function useOptimizedUpdates<T>(
   value: T,
   compareFn?: (prev: T, next: T) => boolean
-) {
+): T {
   const prevValueRef = useRef<T>(value);
   const hasChanged = compareFn ? 
     !compareFn(prevValueRef.current, value) :
