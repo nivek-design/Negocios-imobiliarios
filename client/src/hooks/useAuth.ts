@@ -1,36 +1,39 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useContext, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { AuthContext } from "@/contexts/AuthContext";
 
 export function useAuth() {
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["/api/auth/user"],
-    retry: false,
-  });
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
 
+  const { user, isLoading, signOut } = context;
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const logout = useMutation({
-    mutationFn: async () => {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+  const logout = async () => {
+    try {
+      setIsLoggingOut(true);
       
-      if (!response.ok) {
-        throw new Error("Erro ao fazer logout");
-      }
+      // FIXED: Call both Supabase signOut AND server logout endpoint
+      // This ensures both client-side and server-side cleanup happens properly
+      await Promise.allSettled([
+        // 1. Supabase signOut (clears Supabase session)
+        signOut(),
+        // 2. Server logout endpoint (clears server cookies and session)
+        fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include', // Include cookies for proper server-side cleanup
+        })
+      ]);
       
-      return response.json();
-    },
-    onSuccess: () => {
-      // Clear user data immediately
-      queryClient.setQueryData(["/api/auth/user"], null);
-      queryClient.clear(); // Clear all cache
+      // Clear query cache
+      queryClient.clear();
       
       // Clear any local storage
       localStorage.removeItem('authToken');
@@ -44,21 +47,22 @@ export function useAuth() {
       setTimeout(() => {
         window.location.href = '/';
       }, 500);
-    },
-    onError: (error: any) => {
+    } catch (error: any) {
       toast({
         title: "Erro no logout",
         description: error.message || "Erro inesperado ao fazer logout.",
         variant: "destructive",
       });
-    },
-  });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return {
     user,
     isLoading,
     isAuthenticated: !!user,
-    logout: logout.mutate,
-    isLoggingOut: logout.isPending,
+    logout,
+    isLoggingOut,
   };
 }

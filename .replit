@@ -15,7 +15,7 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 40761
+localPort = 41641
 externalPort = 3000
 
 [env]
@@ -43,7 +43,7 @@ args = "npm run dev"
 waitForPort = 5000
 
 [agent]
-integrations = ["javascript_log_in_with_replit:1.0.0"]
+integrations = ["javascript_log_in_with_replit:1.0.0", "javascript_supabase:1.0.0"]
 
 [objectStorage]
 defaultBucketID = "replit-objstore-9558bbd3-ef5f-47f8-8ae7-defba7f84897"

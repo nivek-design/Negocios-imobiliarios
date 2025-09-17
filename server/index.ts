@@ -39,6 +39,16 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // Create test users on startup in development
+  if (app.get("env") === "development") {
+    try {
+      const { createTestUsers } = await import('./testUsers');
+      await createTestUsers();
+    } catch (error) {
+      console.log('Test users creation skipped:', error);
+    }
+  }
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

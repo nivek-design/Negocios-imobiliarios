@@ -8,17 +8,48 @@ import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { geocodingService } from "./geocoding";
 import { sendEmail, generateAppointmentConfirmationEmail, generateAppointmentReminderEmail } from "./emailService";
 import { notificationService } from "./notificationService";
+import { signIn, signUp, signOut, getCurrentUser, createAdminUser, createAgentUser } from "./authService";
 import jwt from "jsonwebtoken";
 import { promisify } from "util";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
+  /**
+   * SIMPLIFIED AUTHENTICATION ARCHITECTURE
+   * 
+   * This application uses a streamlined authentication system with the following priorities:
+   * 
+   * 1. PRIMARY: JWT Tokens from Supabase Auth
+   *    - Most efficient and secure method
+   *    - Stored in HTTP-only cookies for security
+   *    - Contains user ID, email, role, and names
+   * 
+   * 2. FALLBACK: Session-based auth
+   *    - For compatibility during transition periods
+   *    - Stored in req.session.user
+   * 
+   * 3. MINIMAL REPLIT FALLBACK: Only when absolutely necessary
+   *    - Maintains compatibility with Replit environment
+   *    - Used only if JWT and session auth fail
+   * 
+   * User object is standardized across all auth methods with:
+   * - id: string (primary user identifier)
+   * - email: string
+   * - firstName: string
+   * - lastName: string  
+   * - role: 'client' | 'agent' | 'admin'
+   * - claims: { sub: string } (for backward compatibility)
+   */
+  
+  // Initialize Replit Auth (minimal setup for compatibility)
   await setupAuth(app);
 
   // JWT Secret (in production this should be in environment variables)
   const JWT_SECRET = process.env.JWT_SECRET || "premier-properties-secret-key-2024";
   
-  // Helper function to generate JWT token
+  /**
+   * JWT Token Generation for Supabase Auth
+   * Creates secure tokens containing user data for stateless authentication
+   */
   const generateToken = (user: any, rememberMe: boolean = false) => {
     const expiresIn = rememberMe ? '30d' : '24h';
     return jwt.sign(
@@ -34,68 +65,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
     );
   };
 
-  // Enhanced authentication middleware with JWT priority
-  const customIsAuthenticated = (req: any, res: any, next: any) => {
-    // Check JWT token first (highest priority)
-    const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.authToken;
-    
-    if (token) {
+  /**
+   * FIXED Authentication Middleware - Production Ready
+   * PRIORITY ORDER: Cookie authToken > Authorization header > Supabase JWT validation > Session > Replit
+   * NEVER clears cookies unless explicitly intended
+   * Standardizes user object format across all auth methods
+   */
+  const customIsAuthenticated = async (req: any, res: any, next: any) => {
+    // Extract user ID consistently from any auth method
+    const getUserId = (user: any) => {
+      return user?.id || user?.claims?.sub || user?.sub;
+    };
+
+    // Extract user role consistently from any auth method  
+    const getUserRole = (user: any) => {
+      return user?.role || user?.userRole || 'client';
+    };
+
+    // Standardize user object format
+    const standardizeUser = (userData: any) => {
+      const userId = getUserId(userData);
+      const userRole = getUserRole(userData);
+      
+      return {
+        id: userId,
+        email: userData.email,
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
+        role: userRole,
+        claims: { sub: userId }, // For backward compatibility
+      };
+    };
+
+    // 1. PRIMARY: Check cookie authToken first (most secure for web apps)
+    const cookieToken = req.cookies?.authToken;
+    if (cookieToken) {
       try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
-        req.user = { 
-          ...decoded,
-          claims: { sub: decoded.id }, // For compatibility with existing code
-          role: decoded.role // Ensure role is accessible
-        };
+        const decoded = jwt.verify(cookieToken, JWT_SECRET) as any;
+        req.user = standardizeUser(decoded);
         return next();
       } catch (error) {
-        // Token invalid, clear cookie and continue to other auth methods
+        // Only clear cookie if it was actually invalid, not if authorization header fails
         res.clearCookie('authToken');
       }
     }
+
+    // 2. SECONDARY: Check Authorization header (for API clients)
+    const authHeaderToken = req.headers.authorization?.replace('Bearer ', '');
+    if (authHeaderToken) {
+      try {
+        const decoded = jwt.verify(authHeaderToken, JWT_SECRET) as any;
+        req.user = standardizeUser(decoded);
+        return next();
+      } catch (error) {
+        // DO NOT clear cookie here - authorization header failure shouldn't affect cookie auth
+        // Continue to fallback methods
+      }
+    }
+
+    // 3. FALLBACK: Supabase JWT validation using supabase.auth.getUser()
+    const token = cookieToken || authHeaderToken;
+    if (token) {
+      try {
+        const { getCurrentUser } = await import('./authService');
+        const supabaseUser = await getCurrentUser(token);
+        if (supabaseUser) {
+          req.user = standardizeUser(supabaseUser);
+          return next();
+        }
+      } catch (error) {
+        // Supabase validation failed, continue to session auth
+      }
+    }
     
-    // Check custom session (second priority)
+    // 4. FALLBACK: Check session-based auth for compatibility
     if (req.session?.user) {
-      req.user = {
-        ...req.session.user,
-        claims: { sub: req.session.user.id },
-        role: req.session.user.role
-      };
+      req.user = standardizeUser(req.session.user);
       return next();
     }
     
-    // Fallback to Replit auth (lowest priority)
-    return isAuthenticated(req, res, next);
+    // 5. MINIMAL REPLIT FALLBACK: Only if absolutely necessary
+    if (req.isAuthenticated && req.isAuthenticated() && req.user?.claims?.sub) {
+      req.user = standardizeUser(req.user);
+      return next();
+    }
+    
+    // No valid authentication found
+    return res.status(401).json({ message: "Unauthorized" });
   };
 
-  // Role-based access control middlewares
+  /**
+   * Consolidated Role-Based Access Control Middleware
+   * Simplifies role checking with consistent user data access
+   */
+  
+  // Helper function to check user roles consistently
+  const checkUserRole = (req: any, allowedRoles: string[]) => {
+    const userRole = req.user?.role;
+    return userRole && allowedRoles.includes(userRole);
+  };
+
+  // Basic authentication requirement
   const requireAuth = customIsAuthenticated;
 
+  // Agent or Admin access required
   const requireAgent = (req: any, res: any, next: any) => {
     customIsAuthenticated(req, res, () => {
-      const userRole = req.user?.role || req.session?.user?.role;
-      if (!userRole || (userRole !== 'agent' && userRole !== 'admin')) {
+      if (!checkUserRole(req, ['agent', 'admin'])) {
         return res.status(403).json({ message: "Acesso negado. Apenas corretores e administradores." });
       }
       next();
     });
   };
 
+  // Admin-only access required
   const requireAdmin = (req: any, res: any, next: any) => {
     customIsAuthenticated(req, res, () => {
-      const userRole = req.user?.role || req.session?.user?.role;
-      if (userRole !== 'admin') {
+      if (!checkUserRole(req, ['admin'])) {
         return res.status(403).json({ message: "Acesso negado. Apenas administradores." });
       }
       next();
     });
   };
 
-  // Property ownership check middleware
+  /**
+   * Property Ownership Middleware - Simplified with consistent user access
+   * Ensures agents can only access their own properties, admins can access all
+   */
   const requirePropertyOwnership = async (req: any, res: any, next: any) => {
     try {
-      const userId = req.user?.claims?.sub || req.user?.id;
-      const userRole = req.user?.role || req.session?.user?.role;
+      const userId = req.user?.id; // Simplified - always use req.user.id
+      const userRole = req.user?.role;
       const property = await storage.getProperty(req.params.id);
       
       if (!property) {
@@ -153,18 +253,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/objects/upload", isAuthenticated, async (req, res) => {
+  app.post("/api/objects/upload", requireAuth, async (req, res) => {
     const objectStorageService = new ObjectStorageService();
     const uploadURL = await objectStorageService.getObjectEntityUploadURL();
     res.json({ uploadURL });
   });
 
-  app.put("/api/property-images", isAuthenticated, async (req: any, res) => {
+  app.put("/api/property-images", requireAuth, async (req: any, res) => {
     if (!req.body.imageURL) {
       return res.status(400).json({ error: "imageURL is required" });
     }
 
-    const userId = req.user?.claims?.sub;
+    const userId = req.user.id; // Simplified user ID access
 
     try {
       const objectStorageService = new ObjectStorageService();
@@ -190,7 +290,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ apiKey: process.env.GOOGLE_MAPS_API_KEY || '' });
   });
 
-  // Auth routes
+  /**
+   * AUTHENTICATION ROUTES
+   * 
+   * These routes handle user authentication using Supabase Auth as the primary method,
+   * with JWT tokens for subsequent requests and session storage as fallback.
+   */
+  
+  // Login endpoint - uses Supabase Auth + JWT tokens
   app.post('/api/auth/login', async (req, res) => {
     try {
       const { email, password, rememberMe = false } = req.body;
@@ -208,48 +315,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "A senha deve ter pelo menos 6 caracteres" });
       }
       
-      // Credenciais de teste para corretor
-      const validCredentials = [
-        { email: "corretor@premier.com", password: "123456", name: "João Silva", role: "agent" },
-        { email: "admin@premier.com", password: "admin123", name: "Admin Premier", role: "admin" },
-      ];
+      // Primary authentication via Supabase Auth
+      // This handles email/password verification and returns user data
+      const result = await signIn(email, password);
       
-      const credential = validCredentials.find(cred => 
-        cred.email === email && cred.password === password
-      );
-      
-      if (!credential) {
-        // Add delay to prevent brute force attacks
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!result.session) {
         return res.status(401).json({ message: "Credenciais inválidas" });
       }
-      
-      // Create user session object
+
       const userSession = {
-        id: credential.email === "admin@premier.com" ? "admin" : "corretor",
-        email: credential.email,
-        firstName: credential.name.split(' ')[0],
-        lastName: credential.name.split(' ')[1] || '',
-        role: credential.role,
+        id: result.userRecord?.id || result.user.id,
+        email: result.userRecord?.email || result.user.email || email,
+        firstName: result.userRecord?.firstName || '',
+        lastName: result.userRecord?.lastName || '',
+        role: result.userRecord?.role || 'client',
       };
       
-      // Ensure user exists in database
-      try {
-        await storage.upsertUser({
-          id: userSession.id,
-          email: userSession.email,
-          firstName: userSession.firstName,
-          lastName: userSession.lastName,
-        });
-      } catch (error) {
-        console.error("Error upserting user during login:", error);
-        return res.status(500).json({ message: "Erro ao processar dados do usuário" });
-      }
-      
-      // Generate JWT token
+      // Generate secure JWT token for subsequent requests
       const token = generateToken(userSession, rememberMe);
       
-      // Save in session for fallback
+      // Store in session as fallback authentication method
       (req.session as any).user = userSession;
       
       // Set secure cookie
@@ -270,57 +355,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error during login:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
+      res.status(401).json({ message: "Credenciais inválidas" });
     }
   });
 
-  app.get('/api/auth/user', async (req: any, res) => {
+  // Registration route
+  app.post('/api/auth/register', async (req, res) => {
     try {
-      // Check JWT token first
-      const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.authToken;
+      const { email, password, firstName, lastName, role = 'client' } = req.body;
       
-      if (token) {
-        try {
-          const decoded = jwt.verify(token, JWT_SECRET) as any;
-          // Return user from JWT payload
-          return res.json({
-            id: decoded.id,
-            email: decoded.email,
-            firstName: decoded.firstName,
-            lastName: decoded.lastName,
-            role: decoded.role
-          });
-        } catch (error) {
-          // JWT invalid, clear cookie and continue to other auth methods
-          res.clearCookie('authToken');
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email e senha são obrigatórios" });
+      }
+      
+      if (password.length < 6) {
+        return res.status(400).json({ message: "A senha deve ter pelo menos 6 caracteres" });
+      }
+      
+      const result = await signUp(email, password, firstName, lastName, role);
+      
+      res.json({
+        message: "Registro realizado com sucesso. Verifique seu email para confirmar a conta.",
+        user: {
+          id: result.user?.id,
+          email: result.user?.email
         }
-      }
-      
-      // Check session-based auth
-      if (req.session?.user) {
-        return res.json(req.session.user);
-      }
-      
-      // Fallback to Replit Auth if available
-      if (req.isAuthenticated && req.isAuthenticated() && req.user?.claims?.sub) {
-        const userId = req.user.claims.sub;
-        const user = await storage.getUser(userId);
-        if (user) {
-          return res.json(user);
-        }
-      }
-      
-      // No valid authentication found
-      return res.status(401).json({ message: "Unauthorized" });
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
+      });
+    } catch (error: any) {
+      console.error("Error during registration:", error);
+      res.status(400).json({ message: error.message || "Erro ao criar conta" });
     }
   });
 
+  // Simplified logout route - handles all auth methods properly
   app.post('/api/auth/logout', async (req: any, res) => {
     try {
-      // Clear JWT cookie with proper options
+      // Attempt to sign out from Supabase Auth
+      await signOut();
+      
+      // Clear JWT authentication cookie with proper options
       res.clearCookie('authToken', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -353,7 +426,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Property routes
+  app.get('/api/auth/user', async (req: any, res) => {
+    try {
+      // Check JWT token first
+      const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.authToken;
+      
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET) as any;
+          // Return user from JWT payload
+          return res.json({
+            id: decoded.id,
+            email: decoded.email,
+            firstName: decoded.firstName,
+            lastName: decoded.lastName,
+            role: decoded.role
+          });
+        } catch (error) {
+          // JWT invalid, clear cookie and continue to other auth methods
+          res.clearCookie('authToken');
+        }
+      }
+      
+      // Check session-based auth
+      if (req.session?.user) {
+        return res.json(req.session.user);
+      }
+      
+      // Fallback to Replit Auth if available (minimal fallback)
+      if (req.isAuthenticated && req.isAuthenticated() && req.user?.claims?.sub) {
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        if (user) {
+          return res.json(user);
+        }
+      }
+      
+      // No valid authentication found
+      return res.status(401).json({ message: "Unauthorized" });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+
+  /**
+   * PROPERTY ROUTES
+   * 
+   * These routes handle property-related operations.
+   * Some routes require authentication, others are public.
+   * All use the simplified authentication middleware.
+   */
+  
+  // Public route - fetch properties with filters
   app.get("/api/properties", async (req, res) => {
     try {
       const filters = {
@@ -414,11 +540,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Record property view
+  // Record property view - simplified user ID access
   app.post("/api/properties/:id/view", async (req: any, res) => {
     try {
       const propertyId = req.params.id;
-      const userId = req.user?.claims?.sub || null;
+      const userId = req.user?.id || null; // Simplified user ID access
       const ipAddress = req.ip || req.connection.remoteAddress || null;
       
       await storage.createPropertyView({
@@ -434,11 +560,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add property to favorites
-  app.post("/api/properties/:id/favorite", isAuthenticated, async (req: any, res) => {
+  // Add property to favorites - use simplified auth middleware
+  app.post("/api/properties/:id/favorite", requireAuth, async (req: any, res) => {
     try {
       const propertyId = req.params.id;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id; // Simplified user ID access
       
       await storage.createPropertyFavorite({
         propertyId,
@@ -452,11 +578,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Remove property from favorites
-  app.delete("/api/properties/:id/favorite", isAuthenticated, async (req: any, res) => {
+  // Remove property from favorites - use simplified auth middleware
+  app.delete("/api/properties/:id/favorite", requireAuth, async (req: any, res) => {
     try {
       const propertyId = req.params.id;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id; // Simplified user ID access
       
       await storage.removePropertyFavorite(propertyId, userId);
       
@@ -467,11 +593,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Check if property is favorited by user
-  app.get("/api/properties/:id/is-favorited", isAuthenticated, async (req: any, res) => {
+  // Check if property is favorited by user - use simplified auth middleware
+  app.get("/api/properties/:id/is-favorited", requireAuth, async (req: any, res) => {
     try {
       const propertyId = req.params.id;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id; // Simplified user ID access
       
       const isFavorited = await storage.isPropertyFavorited(propertyId, userId);
       
@@ -482,10 +608,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user favorites
-  app.get("/api/user/favorites", isAuthenticated, async (req: any, res) => {
+  // Get user favorites - use simplified auth middleware
+  app.get("/api/user/favorites", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id; // Simplified user ID access
       const favorites = await storage.getUserFavorites(userId);
       res.json(favorites);
     } catch (error) {
@@ -496,7 +622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/properties", requireAgent, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub || req.user?.id;
+      const userId = req.user.id; // Simplified user ID access
       const propertyData = insertPropertySchema.parse({
         ...req.body,
         agentId: userId,
@@ -537,10 +663,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/agent/properties", customIsAuthenticated, async (req: any, res) => {
+  app.get("/api/agent/properties", requireAuth, async (req: any, res) => {
     try {
-      // Get user ID from custom session or Replit session
-      const userId = req.session?.user?.id || req.user?.claims?.sub;
+      const userId = req.user.id; // Simplified user ID access
       const properties = await storage.getPropertiesByAgent(userId);
       res.json(properties);
     } catch (error) {
@@ -549,7 +674,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Inquiry routes
+  /**
+   * INQUIRY ROUTES
+   * 
+   * Handle property inquiries and related operations.
+   * Uses simplified authentication middleware for protected routes.
+   */
+  
+  // Public route - create inquiry
   app.post("/api/inquiries", async (req, res) => {
     try {
       const inquiryData = insertInquirySchema.parse(req.body);
@@ -564,10 +696,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/agent/inquiries", customIsAuthenticated, async (req: any, res) => {
+  app.get("/api/agent/inquiries", requireAuth, async (req: any, res) => {
     try {
-      // Get user ID from custom session or Replit session
-      const userId = req.session?.user?.id || req.user?.claims?.sub;
+      const userId = req.user.id; // Simplified user ID access
       const inquiries = await storage.getInquiriesByAgent(userId);
       res.json(inquiries);
     } catch (error) {
@@ -576,11 +707,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get agent metrics
-  app.get("/api/agent/metrics", customIsAuthenticated, async (req: any, res) => {
+  // Get agent metrics - simplified user ID access
+  app.get("/api/agent/metrics", requireAuth, async (req: any, res) => {
     try {
-      // Get user ID from custom session or Replit session
-      const userId = req.session?.user?.id || req.user?.claims?.sub;
+      const userId = req.user.id; // Simplified user ID access
       const metrics = await storage.getAgentMetrics(userId);
       res.json(metrics);
     } catch (error) {
@@ -589,9 +719,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/properties/:id/inquiries", isAuthenticated, async (req: any, res) => {
+  app.get("/api/properties/:id/inquiries", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id; // Simplified user ID access
       const property = await storage.getProperty(req.params.id);
       
       if (!property) {
